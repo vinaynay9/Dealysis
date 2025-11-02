@@ -20,8 +20,7 @@ dealysis/
 │   ├── web/              # React Router + Hono web application
 │   └── mobile/           # Expo/React Native mobile app (minimal/WIP)
 ├── docs/                 # Documentation and schema files
-├── scripts/              # Build and deployment scripts
-└── shared/               # Shared types and utilities (to be created)
+└── env.example           # Environment variable template
 ```
 
 ### Technology Stack
@@ -221,7 +220,7 @@ This app uses a proprietary hosting platform that provides:
 ### Critical Bugs (Fix Tonight)
 
 1. **PDF Processing Broken** 🔴
-   - **Location**: `apps/web/src/app/api/process-documents/route.js:41-65`
+   - **Location**: `apps/web/src/app/api/process-documents/route.js`
    - **Problem**: Naive text extraction fails on most PDFs (image-based, complex formatting)
    - **Fix**: Install `pdf-parse` library
    ```bash
