@@ -1,0 +1,1009 @@
+# Dealysis Investment Memo Template
+# Standard structure for VC investment memos based on real deal memos
+# This template guides AI generation to match institutional VC memo format
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-11-02"
+  description: "Standard VC investment memo structure with subsections, tone guidelines, and data flags"
+
+memo_structure:
+  # ============================================================================
+  # HEADER SECTION (Always First)
+  # ============================================================================
+  header:
+    name: "Deal Memo Header"
+    required: true
+    subsections:
+      - name: "Company Name"
+        type: "string"
+        required: true
+        format: "Bold heading, centered or top-left"
+      
+      - name: "Brief Overview"
+        type: "section"
+        required: true
+        fields:
+          - name: "Diligence Team"
+            type: "string"
+            required: false
+            example: "Analyst: [Name], Partner: [Name]"
+          
+          - name: "Location"
+            type: "string"
+            required: false
+            example: "San Francisco, CA"
+          
+          - name: "Source"
+            type: "string"
+            required: false
+            example: "Warm intro from [Partner Name]"
+          
+          - name: "Fund and Allocation"
+            type: "string"
+            required: false
+            example: "Fund III, $2M allocation"
+          
+          - name: "Proposed Terms"
+            type: "string"
+            required: false
+            example: "$10M Series A at $50M pre-money (20% ownership)"
+        
+        tone: |
+          Concise bullet-point format. 3-5 lines max.
+          Professional, institutional tone.
+          Include valuation and ownership if available.
+        
+        missing_data_flag: "[⚠️ TERMS REQUIRED]"
+
+  # ============================================================================
+  # COMPANY OVERVIEW
+  # ============================================================================
+  company_overview:
+    name: "Company Overview"
+    required: true
+    order: 1
+    subsections:
+      - name: "Core Business Description"
+        type: "paragraph"
+        required: true
+        length_guidance: "2-3 paragraphs, 6-8 sentences each"
+        tone: |
+          Factual, analyst-style writing. No buzzwords or marketing fluff.
+          Start with: "Company X is a [stage] [sector] company that [value prop]."
+          Include: business model, target market, current stage, founding year.
+        example: |
+          SignalMesh is a Series A data orchestration SaaS platform that enables
+          enterprises to synchronize data pipelines across cloud and on-premise
+          infrastructure. The company targets Fortune 500 companies in financial
+          services and healthcare with data integration challenges...
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Company description needs verification]"
+      
+      - name: "Company Vision"
+        type: "section"
+        required: true
+        length_guidance: "1-2 paragraphs, 4-6 sentences"
+        tone: |
+          Long-term strategic vision. Where the company aims to be in 5-10 years.
+          Market transformation narrative. Avoid generic "change the world" language.
+        example: |
+          SignalMesh envisions becoming the standard orchestration layer for
+          enterprise data infrastructure, positioning between data warehouses
+          and application layers...
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Vision requires strategic assessment]"
+
+  # ============================================================================
+  # DEAL HISTORY
+  # ============================================================================
+  deal_history:
+    name: "Deal History"
+    required: true
+    order: 2
+    subsections:
+      - name: "Development of Deal"
+        type: "narrative"
+        required: true
+        length_guidance: "2-3 paragraphs"
+        tone: |
+          Chronological narrative of how the deal came about.
+          Include: timeline of interactions, key meetings, due diligence process.
+          Professional, factual tone. No emotional language.
+        fields:
+          - name: "Initial Contact"
+            type: "string"
+            example: "Warm intro from [Partner] in [Month Year]"
+          
+          - name: "Key Milestones"
+            type: "list"
+            example: |
+              - Initial meeting: [Date]
+              - Technical diligence: [Date]
+              - Customer references: [Date]
+              - Term sheet negotiation: [Date]
+          
+          - name: "Decision Timeline"
+            type: "string"
+            example: "Target close: [Date], IC meeting: [Date]"
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Deal timeline needs completion]"
+
+  # ============================================================================
+  # DEAL SUMMARY
+  # ============================================================================
+  deal_summary:
+    name: "Deal Summary"
+    required: true
+    order: 3
+    subsections:
+      - name: "Investment Overview"
+        type: "section"
+        required: true
+        length_guidance: "1 paragraph"
+        tone: |
+          Quick snapshot of the investment opportunity.
+          Include: round size, valuation, ownership, use of funds.
+        fields:
+          - name: "Round Size"
+            type: "string"
+            required: true
+          
+          - name: "Valuation"
+            type: "string"
+            required: true
+          
+          - name: "Ownership"
+            type: "string"
+            required: true
+          
+          - name: "Use of Funds"
+            type: "bullet_list"
+            required: false
+            example: |
+              - 40% Product development
+              - 30% Sales and marketing
+              - 20% Operations
+              - 10% Working capital
+        
+        missing_data_flag: "[⚠️ TERMS REQUIRED: Investment terms need confirmation]"
+      
+      - name: "Key Highlights"
+        type: "bullet_list"
+        required: false
+        length_guidance: "5-7 bullet points"
+        tone: |
+          Top reasons to invest. Bold, confident statements.
+          Focus on traction, market position, team strength.
+        example: |
+          - 140 enterprise customers with 95% retention rate
+          - $2.4M ARR growing 12% MoM
+          - Led by former AWS VP with 15 years in data infrastructure
+          - $50B TAM in data orchestration market
+
+  # ============================================================================
+  # INVESTMENT THESIS
+  # ============================================================================
+  investment_thesis:
+    name: "Investment Thesis"
+    required: true
+    order: 4
+    description: |
+      This is the core argument. Bold statements on developments that must be true
+      for the investment to succeed. High confidence/conviction required.
+    
+    subsections:
+      - name: "Primary Thesis Points"
+        type: "numbered_list"
+        required: true
+        length_guidance: "3-5 main points"
+        tone: |
+          Bold, declarative statements. High conviction language.
+          Each point should be: Specific, Measurable, High Confidence.
+          Format: "1. [Bold statement]. [2-3 sentences of support with data]."
+        example: |
+          1. SignalMesh's technical moat in real-time orchestration is defensible
+             given their proprietary algorithm reducing latency by 60% vs. competitors.
+             [Source: Technical analysis, customer benchmarks]
+          
+          2. Market timing is optimal as enterprises accelerate cloud migration
+             post-COVID, creating $2B+ near-term TAM expansion. [Source: Gartner 2025]
+          
+          3. Founders have domain expertise (AWS VP) + proven execution
+             (previous exit at $200M). Team has scaled from 5 to 45 in 18 months.
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Thesis requires strategic validation]"
+      
+      - name: "Supporting Evidence"
+        type: "paragraph"
+        required: false
+        tone: |
+          Data, metrics, market signals that support each thesis point.
+          Use citations [1], [2] when referencing source documents.
+        format: "Each thesis point followed by 2-3 sentences of supporting evidence with citations."
+
+  # ============================================================================
+  # KEY RISKS
+  # ============================================================================
+  key_risks:
+    name: "Key Risks"
+    required: true
+    order: 5
+    description: |
+      Honest assessment of risks. Always end with mitigation strategies.
+      Shows balanced analysis, not just sales pitch.
+    
+    subsections:
+      - name: "Risk Categories"
+        type: "section"
+        required: true
+        categories:
+          - name: "Market Risks"
+            type: "list_item"
+            tone: "Demand uncertainty, market timing, TAM miscalculation"
+          
+          - name: "Competitive Risks"
+            type: "list_item"
+            tone: "Large tech incumbents, new entrants, feature parity"
+          
+          - name: "Execution Risks"
+            type: "list_item"
+            tone: "Hiring challenges, sales execution, product delays"
+          
+          - name: "Technology Risks"
+            type: "list_item"
+            tone: "Scalability, security, technical debt"
+          
+          - name: "Financial Risks"
+            type: "list_item"
+            tone: "Burn rate, runway, revenue concentration, unit economics"
+        
+        format: |
+          For each risk:
+          1. Risk statement (1-2 sentences)
+          2. Impact assessment (High/Medium/Low)
+          3. Mitigation strategy (2-3 sentences)
+        
+        example: |
+          **Market Risk: Enterprise Adoption Timeline**
+          Impact: Medium
+          Enterprises typically take 12-18 months to evaluate and adopt new
+          data infrastructure solutions. SignalMesh's 6-month sales cycle assumptions
+          may be optimistic.
+          
+          Mitigation: Company has 15 LOIs from Fortune 500 companies, indicating
+          strong demand signals. Pilot program with [Customer] showed 30% faster
+          deployment than competitors.
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Risk assessment requires deeper analysis]"
+
+  # ============================================================================
+  # TEAM
+  # ============================================================================
+  team:
+    name: "Team"
+    required: true
+    order: 6
+    subsections:
+      - name: "Individual Team Backgrounds"
+        type: "section"
+        required: true
+        length_guidance: "2-3 paragraphs per key person"
+        tone: |
+          Professional background summaries. Focus on relevant experience.
+          Include: education, previous roles, achievements, domain expertise.
+          No fluff - just facts that matter for execution.
+        
+        key_roles:
+          - name: "Founder/CEO"
+            required: true
+            fields:
+              - name: "Background"
+                type: "paragraph"
+              - name: "Previous Experience"
+                type: "bullet_list"
+              - name: "Domain Expertise"
+                type: "string"
+              - name: "Notable Achievements"
+                type: "bullet_list"
+        
+          - name: "CTO/Technical Co-founder"
+            required: false
+            fields:
+              - name: "Technical Background"
+                type: "paragraph"
+              - name: "Previous Companies"
+                type: "list"
+        
+          - name: "Other Key Executives"
+            required: false
+            format: "Shorter summaries (1 paragraph each)"
+        
+        example: |
+          **John Smith, CEO & Co-founder**
+          Former VP of Data Infrastructure at AWS (2015-2020), where he led
+          the team building AWS Data Pipeline. Prior to AWS, spent 8 years at
+          Oracle building enterprise data tools. Holds MS in Computer Science
+          from Stanford. Exited previous startup DataFlow to Microsoft for $200M
+          in 2012.
+          
+          Domain expertise: 15+ years in enterprise data infrastructure,
+          deep relationships with Fortune 500 data teams.
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Team backgrounds need verification]"
+      
+      - name: "Founder References"
+        type: "section"
+        required: false
+        tone: |
+          Quotes or summaries from reference calls with previous employers,
+          investors, or customers. Adds credibility.
+        format: "Quote format: '[Quote]' - [Name], [Title] at [Company]"
+        example: |
+          "John was one of the strongest technical leaders at AWS. His ability
+          to navigate enterprise sales cycles and build products that scale
+          was exceptional." - Sarah Johnson, Former Director at AWS
+
+  # ============================================================================
+  # SOLUTION + PRODUCT
+  # ============================================================================
+  solution_product:
+    name: "Solution + Product"
+    required: true
+    order: 7
+    subsections:
+      - name: "Product Description"
+        type: "section"
+        required: true
+        length_guidance: "2-3 paragraphs"
+        tone: |
+          Clear, technical but accessible description. What it does, how it works.
+          Focus on user value, not features. Use concrete examples.
+        fields:
+          - name: "Core Functionality"
+            type: "paragraph"
+          
+          - name: "Key Features"
+            type: "bullet_list"
+            length_guidance: "5-7 features"
+          
+          - name: "User Workflows"
+            type: "paragraph"
+            example: "Enterprise data teams use SignalMesh to..."
+        
+        example: |
+          SignalMesh is a cloud-native data orchestration platform that enables
+          enterprises to synchronize data pipelines across hybrid cloud and
+          on-premise infrastructure. The platform acts as a middleware layer
+          between data sources (databases, data lakes, APIs) and destinations
+          (data warehouses, analytics platforms).
+          
+          Key features include:
+          - Real-time data synchronization with <100ms latency
+          - Visual pipeline builder (no-code interface)
+          - Automated data quality checks
+          - Multi-cloud support (AWS, Azure, GCP)
+          - Enterprise security (SOC2, GDPR compliant)
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Product capabilities need technical validation]"
+      
+      - name: "Technical Differentiation"
+        type: "section"
+        required: false
+        tone: |
+          What makes this technically superior or different.
+          Proprietary algorithms, patents, unique approaches.
+        format: "2-3 paragraphs with technical specifics"
+
+  # ============================================================================
+  # PRODUCT ROADMAP
+  # ============================================================================
+  product_roadmap:
+    name: "Product Roadmap"
+    required: true
+    order: 8
+    subsections:
+      - name: "Near Term Priorities"
+        type: "section"
+        required: true
+        time_horizon: "6-12 months"
+        format: "Bullet list with timelines"
+        tone: |
+          Concrete, achievable milestones. Feature releases, integrations,
+          platform enhancements. Avoid vague "improve UX" language.
+        example: |
+          Q1 2025:
+          - Launch enterprise SSO integration (January)
+          - Release real-time analytics dashboard (March)
+          - Complete SOC2 Type II certification (Q1)
+          
+          Q2 2025:
+          - Launch GraphQL API for custom integrations
+          - Add support for Snowflake and Databricks
+          - Release mobile app for pipeline monitoring
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Roadmap requires product team validation]"
+      
+      - name: "Long Term Priorities"
+        type: "section"
+        required: true
+        time_horizon: "12-24 months"
+        format: "2-3 paragraphs"
+        tone: |
+          Strategic vision, platform expansion, market opportunities.
+          More high-level than near-term.
+        example: |
+          Over the next 18-24 months, SignalMesh plans to expand beyond
+          data orchestration into adjacent areas: data quality monitoring,
+          data lineage tracking, and automated compliance reporting.
+          The company aims to become the complete data infrastructure
+          platform for enterprise customers...
+
+  # ============================================================================
+  # MARKET AND MARKET RESEARCH
+  # ============================================================================
+  market_research:
+    name: "Market and Market Research"
+    required: true
+    order: 9
+    subsections:
+      - name: "Market Overview"
+        type: "section"
+        required: true
+        length_guidance: "2-3 paragraphs"
+        tone: |
+          High-level market context. Why this market matters now.
+          Industry trends, macro factors driving growth.
+        missing_data_flag: "[⚠️ ANALYST INPUT: Market overview needs research validation]"
+      
+      - name: "Market Dynamics"
+        type: "section"
+        required: true
+        tone: |
+          How the market is evolving. Technology shifts, regulatory changes,
+          customer behavior changes. What's driving demand.
+        format: "2-3 paragraphs"
+      
+      - name: "Market Research"
+        type: "section"
+        required: false
+        tone: |
+          Third-party research, analyst reports, industry studies.
+          Citations required: [Source], [Report Name], [Date]
+        example: |
+          According to Gartner's 2025 Data Infrastructure Report, the data
+          orchestration market is growing at 45% CAGR through 2028. [Source: Gartner 2025]
+          IDC projects enterprise spending on data infrastructure will reach
+          $180B by 2026. [Source: IDC Market Forecast, 2024]
+      
+      - name: "Market Size"
+        type: "section"
+        required: true
+        format: "Structured data with TAM/SAM/SOM"
+        tone: |
+          Use top-down and bottom-up analysis. Show methodology.
+          Be specific about assumptions.
+        fields:
+          - name: "TAM (Total Addressable Market)"
+            type: "string"
+            example: "$50B (all data infrastructure software globally)"
+            required: true
+          
+          - name: "SAM (Serviceable Addressable Market)"
+            type: "string"
+            example: "$12B (enterprise data orchestration in North America + Europe)"
+            required: true
+          
+          - name: "SOM (Serviceable Obtainable Market)"
+            type: "string"
+            example: "$500M (enterprise customers with >$1B revenue, 5-year target)"
+            required: false
+          
+          - name: "Market Size Methodology"
+            type: "paragraph"
+            example: "Based on Gartner data + bottom-up analysis of 500 target enterprises"
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Market sizing requires methodology review]"
+      
+      - name: "Market Calls (Customers)"
+        type: "section"
+        required: false
+        description: |
+          Summary of customer discovery calls, interviews, surveys.
+          Validates demand, willingness to pay, pain points.
+        format: "Bullet list with key insights"
+        example: |
+          - 12 customer interviews conducted: 10/12 expressed "critical need"
+          - Average budget allocated: $500K-$2M annually for data infrastructure
+          - Primary pain point: Manual data pipeline management (mentioned 8/12)
+          - Willingness to pay: 80% of customers willing to pay 2x current solutions
+        tone: |
+          Quantitative insights from customer research. Use numbers, percentages.
+          Include source: "[Source: Customer interviews, [Date]]"
+
+  # ============================================================================
+  # COMPETITORS
+  # ============================================================================
+  competitors:
+    name: "Competitors"
+    required: true
+    order: 10
+    subsections:
+      - name: "Competitive Dynamics"
+        type: "section"
+        required: true
+        length_guidance: "2-3 paragraphs"
+        tone: |
+          Overview of competitive landscape. Market structure,
+          incumbent positions, new entrants. How competitive the market is.
+        example: |
+          The data orchestration market is fragmented with three categories:
+          (1) Large tech incumbents (AWS, Microsoft, Google) offering basic
+          orchestration as part of broader platforms, (2) Specialist startups
+          (Airbyte, Fivetran) focused on data ingestion, and (3) Legacy tools
+          (Informatica, Talend) with on-premise focus. SignalMesh competes
+          in the emerging "intelligent orchestration" category, differentiating
+          through real-time capabilities and multi-cloud support.
+      
+      - name: "List of Competitors"
+        type: "section"
+        required: true
+        format: "Table or structured list"
+        tone: |
+          For each competitor: Name, Category, Key Differentiators, Market Position
+        fields:
+          - name: "Competitor Name"
+            type: "string"
+          
+          - name: "Category"
+            type: "string"
+            example: "Incumbent", "Startup", "Legacy Vendor"
+          
+          - name: "Key Differentiators"
+            type: "bullet_list"
+          
+          - name: "Market Position"
+            type: "string"
+            example: "Market leader in [segment]", "Emerging player"
+          
+          - name: "Funding/Ressources"
+            type: "string"
+            example: "$50M Series B", "Public company"
+        
+        example: |
+          | Competitor | Category | Key Differentiators | Market Position |
+          |------------|----------|---------------------|-----------------|
+          | Airbyte | Startup | Open-source, data ingestion focus | Growing, $150M raised |
+          | Fivetran | Startup | ELT automation, 1000+ connectors | Market leader, $565M raised |
+          | AWS Data Pipeline | Incumbent | Part of AWS ecosystem | Dominant in AWS-native |
+          | Informatica | Legacy | Enterprise on-premise focus | Declining, legacy customer base |
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Competitive analysis requires deeper research]"
+      
+      - name: "Competitive Positioning"
+        type: "section"
+        required: false
+        tone: |
+          Where SignalMesh fits vs. competitors. Competitive advantages,
+          white space opportunities. Positioning matrix description.
+
+  # ============================================================================
+  # GTM AND TRACTION
+  # ============================================================================
+  gtm_traction:
+    name: "GTM and Traction"
+    required: true
+    order: 11
+    subsections:
+      - name: "GTM Strategy"
+        type: "section"
+        required: true
+        length_guidance: "2-3 paragraphs"
+        tone: |
+          How the company acquires customers. Sales model, channels,
+          pricing strategy, customer acquisition process.
+        fields:
+          - name: "Sales Model"
+            type: "string"
+            example: "Enterprise sales (inside sales + field sales)"
+          
+          - name: "Primary Channels"
+            type: "bullet_list"
+            example: |
+              - Direct sales to Fortune 500 data teams
+              - Partnerships with cloud providers (AWS, Azure)
+              - Content marketing and webinars
+          
+          - name: "Pricing Model"
+            type: "string"
+            example: "Usage-based pricing: $X per data pipeline per month"
+          
+          - name: "Sales Cycle"
+            type: "string"
+            example: "Average 6 months from first contact to close"
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: GTM strategy needs validation with sales team]"
+      
+      - name: "Customers and Traction"
+        type: "section"
+        required: true
+        length_guidance: "2-3 paragraphs + metrics table"
+        tone: |
+          Quantitative traction metrics. Customer growth, revenue growth,
+          retention, expansion. Use real numbers with citations.
+        fields:
+          - name: "Total Customers"
+            type: "string"
+            example: "140 enterprise customers"
+          
+          - name: "Customer Growth"
+            type: "string"
+            example: "45% YoY customer growth"
+          
+          - name: "Revenue Metrics"
+            type: "table"
+            fields:
+              - name: "ARR"
+                type: "string"
+                example: "$2.4M"
+              - name: "Growth Rate"
+                type: "string"
+                example: "12% MoM"
+              - name: "MRR"
+                type: "string"
+                example: "$200K"
+          
+          - name: "Retention"
+            type: "string"
+            example: "95% net revenue retention, 98% gross retention"
+          
+          - name: "Expansion Revenue"
+            type: "string"
+            example: "120% net dollar retention"
+        
+        format: "Metrics table followed by 2 paragraphs explaining trends"
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Traction metrics need verification]"
+      
+      - name: "Ideal Customer Profile (ICP)"
+        type: "section"
+        required: false
+        format: "Bullet list"
+        tone: |
+          Specific customer characteristics. Industry, company size,
+          use cases, budget, decision-makers.
+        example: |
+          - Industry: Financial services, healthcare, retail
+          - Company size: Fortune 500 or >$1B revenue
+          - Use case: Multi-cloud data synchronization, real-time analytics
+          - Budget: $500K-$2M annually for data infrastructure
+          - Decision-maker: VP/Director of Data Engineering
+      
+      - name: "Customer Snapshot"
+        type: "section"
+        required: false
+        format: "2-3 customer case studies"
+        tone: |
+          Brief case studies of notable customers. Use case, results,
+          quote if available. 1-2 paragraphs per customer.
+        example: |
+          **Fortune 100 Financial Services Company**
+          Use case: Synchronize transaction data across 3 cloud providers
+          and on-premise systems in real-time for fraud detection.
+          
+          Results: Reduced data latency from 4 hours to <5 minutes,
+          enabled real-time fraud detection, saved $2M in infrastructure costs.
+          
+          Quote: "SignalMesh transformed our data infrastructure and enabled
+          use cases we couldn't support before." - [Name], [Title]
+
+  # ============================================================================
+  # COMPANY MILESTONES & FINANCIAL PROJECTIONS
+  # ============================================================================
+  financials:
+    name: "Company Milestones & Financial Projections"
+    required: true
+    order: 12
+    subsections:
+      - name: "Revenue Quality and Projections"
+        type: "section"
+        required: true
+        format: "Table + 2-3 paragraphs"
+        tone: |
+          Historical revenue with growth rates. Forward projections with assumptions.
+          Breakdown by product line, geography if available. Be specific about
+          assumptions and methodology.
+        fields:
+          - name: "Historical Revenue"
+            type: "table"
+            format: |
+              | Period | Revenue | Growth | Notes |
+              |--------|---------|--------|-------|
+              | 2023 Q1 | $400K | - | Initial customers |
+              | 2023 Q2 | $600K | 50% | Enterprise pilot program |
+              | 2023 Q3 | $900K | 50% | Production deployments |
+              | 2023 Q4 | $1.2M | 33% | Customer expansion |
+          
+          - name: "Revenue Projections"
+            type: "table"
+            time_horizon: "3-5 years"
+            assumptions: "Include key assumptions for projections"
+            example: |
+              | Year | Projected ARR | Growth | Assumptions |
+              |------|---------------|--------|-------------|
+              | 2024 | $3.5M | 192% | Current run rate + pipeline |
+              | 2025 | $8M | 129% | Enterprise expansion, new products |
+              | 2026 | $18M | 125% | Market penetration, partnerships |
+          
+          - name: "Revenue Breakdown"
+            type: "section"
+            format: "If available: by product, geography, customer segment"
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Financial projections require model validation]"
+      
+      - name: "Sales Pipeline"
+        type: "section"
+        required: false
+        tone: |
+          Current pipeline status. Qualified opportunities, close probability,
+          timeline. Shows sales momentum.
+        format: "Bullet list or table"
+        example: |
+          - $8M in qualified pipeline (3x current ARR)
+          - 12 opportunities in late stage (>70% close probability)
+          - Average deal size: $250K ARR
+          - Weighted pipeline: $5.2M (65% probability)
+      
+      - name: "Burn"
+        type: "section"
+        required: true
+        fields:
+          - name: "Monthly Burn Rate"
+            type: "string"
+            example: "$350K/month"
+            required: true
+          
+          - name: "Gross Burn vs Net Burn"
+            type: "string"
+            example: "Gross: $350K, Net: $200K (after revenue)"
+          
+          - name: "Runway"
+            type: "string"
+            example: "11 months at current burn rate"
+            calculation: "Cash / Monthly Burn"
+          
+          - name: "Path to Profitability"
+            type: "paragraph"
+            example: "Projected profitability at $6M ARR (mid-2025) based on unit economics..."
+        
+        missing_data_flag: "[⚠️ ANALYST INPUT: Burn analysis requires detailed financial review]"
+      
+      - name: "Unit Economics"
+        type: "section"
+        required: false
+        tone: |
+          Key unit economic metrics. CAC, LTV, payback period, gross margins.
+          Shows business model viability.
+        fields:
+          - name: "CAC (Customer Acquisition Cost)"
+            type: "string"
+            example: "$45K average CAC"
+          
+          - name: "LTV (Lifetime Value)"
+            type: "string"
+            example: "$450K LTV (10x CAC)"
+          
+          - name: "LTV/CAC Ratio"
+            type: "string"
+            example: "10:1 (target: >3:1)"
+          
+          - name: "Payback Period"
+            type: "string"
+            example: "8 months average payback"
+          
+          - name: "Gross Margin"
+            type: "string"
+            example: "82% gross margin (high-margin SaaS model)"
+
+  # ============================================================================
+  # VALUATION
+  # ============================================================================
+  valuation:
+    name: "Valuation"
+    required: true
+    order: 13
+    subsections:
+      - name: "Valuation Methodology"
+        type: "section"
+        required: true
+        length_guidance: "2-3 paragraphs"
+        tone: |
+          How valuation was determined. Method (revenue multiple, DCF, etc.),
+          comparables, rationale. Be transparent about methodology.
+        methods:
+          - name: "Revenue Multiple"
+            description: "Compare to similar stage companies"
+            example: "Series A SaaS companies trading at 8-12x forward ARR"
+          
+          - name: "Comparable Transactions"
+            description: "Recent M&A or funding rounds in sector"
+            example: "Fivetran: $5.6B valuation at $200M ARR (28x multiple)"
+          
+          - name: "DCF (Discounted Cash Flow)"
+            description: "If available, forward-looking model"
+        
+        example: |
+          Valuation of $50M pre-money is based on:
+          (1) Revenue multiple: 8x projected 2025 ARR ($8M) = $64M,
+          applying 20% discount for early stage = $50M
+          (2) Comparable transactions: Recent Series A rounds in data
+          infrastructure averaged 7-10x forward ARR
+          (3) DCF model: Discounted 5-year cash flows support $45-55M range
+      
+      - name: "Valuation Summary"
+        type: "section"
+        required: true
+        format: "Table or bullet points"
+        fields:
+          - name: "Pre-Money Valuation"
+            type: "string"
+            example: "$50M"
+          
+          - name: "Investment Amount"
+            type: "string"
+            example: "$10M"
+          
+          - name: "Post-Money Valuation"
+            type: "string"
+            example: "$60M"
+          
+          - name: "Ownership Percentage"
+            type: "string"
+            example: "16.7%"
+          
+          - name: "Price Per Share"
+            type: "string"
+            example: "$X.XX"
+        
+        missing_data_flag: "[⚠️ TERMS REQUIRED: Valuation terms need final confirmation]"
+
+  # ============================================================================
+  # APPENDIX
+  # ============================================================================
+  appendix:
+    name: "Appendix"
+    required: false
+    order: 14
+    description: |
+      Supporting materials, detailed data, additional analysis.
+      Optional but common in comprehensive memos.
+    
+    subsections:
+      - name: "Financial Model"
+        type: "section"
+        format: "Table or spreadsheet reference"
+      
+      - name: "Technical Deep Dive"
+        type: "section"
+        format: "2-3 paragraphs"
+        description: "For technical partners, architecture details"
+      
+      - name: "Customer Reference Quotes"
+        type: "section"
+        format: "List of quotes with attribution"
+      
+      - name: "Competitive Feature Matrix"
+        type: "section"
+        format: "Table comparing features across competitors"
+      
+      - name: "Market Research Sources"
+        type: "section"
+        format: "Bibliography of reports, studies referenced"
+
+# ============================================================================
+# TONE AND STYLE GUIDELINES
+# ============================================================================
+tone_guidelines:
+  overall_style: |
+    - Professional, analyst-grade writing
+    - Factual, data-driven, no marketing fluff
+    - Institutional tone suitable for partner-level review
+    - Concise but comprehensive
+    - Use specific numbers, metrics, citations
+  
+  language_rules:
+    - avoid:
+      - "Revolutionary", "game-changing", "disruptive" (buzzwords)
+      - Emotional language ("amazing", "incredible")
+      - Vague claims without data ("huge market", "great team")
+    - prefer:
+      - Specific metrics ("$2.4M ARR growing 12% MoM")
+      - Data-backed statements ("140 customers with 95% retention")
+      - Citations ("[Source: Pitch deck, page 15]")
+  
+  formatting:
+    - Use headers and subheaders for structure
+    - Bullet points for lists (5-7 items max per list)
+    - Tables for comparative data (revenue, competitors, etc.)
+    - Bold for key metrics and thesis points
+    - Citations: [1], [2], [3] format with source guide at end
+
+# ============================================================================
+# DATA FLAGGING SYSTEM
+# ============================================================================
+data_flags:
+  description: |
+    When data is missing or requires analyst verification, use standardized flags.
+    This ensures transparent, accountable AI output.
+  
+  flags:
+    - flag: "[⚠️ TERMS REQUIRED]"
+      usage: "Investment terms, valuation, ownership percentages missing"
+      example: "Proposed terms: [⚠️ TERMS REQUIRED]"
+    
+    - flag: "[⚠️ ANALYST INPUT: [specific area]]"
+      usage: "Data exists but needs analyst verification or strategic assessment"
+      example: "[⚠️ ANALYST INPUT: Market sizing requires methodology review]"
+    
+    - flag: "[⚠️ DATA MISSING: [data point]]"
+      usage: "Specific data point not found in source materials"
+      example: "[⚠️ DATA MISSING: Customer retention rate]"
+    
+    - flag: "[⚠️ SOURCE NEEDED: [claim]]"
+      usage: "Claim made but no source document provided"
+      example: "[⚠️ SOURCE NEEDED: Market size claim requires Gartner report]"
+
+# ============================================================================
+# CITATION SYSTEM
+# ============================================================================
+citations:
+  description: |
+    All factual claims, numbers, quotes must be cited with source references.
+    Use numeric citations [1], [2], [3] format.
+  
+  format: |
+    In-text: "The company achieved $2.4M ARR [1] growing 12% MoM [2]."
+    Sources section: "[1] Pitch Deck, page 8 | [2] Financial model, Q4 2023 | [3] Customer interview transcript"
+  
+  required_for:
+    - Financial metrics (revenue, growth, burn, runway)
+    - Market size claims (TAM, SAM, SOM)
+    - Customer metrics (count, retention, NPS)
+    - Competitive claims (market share, feature comparisons)
+    - Technical claims (performance benchmarks, scalability)
+    - Customer quotes or testimonials
+  
+  source_naming:
+    - "Pitch Deck" or "[filename].pdf"
+    - "Founder Transcript" or "[filename].txt"
+    - "Website Content" or "[url]"
+    - "Customer Interview [Date]"
+    - "Financial Model [Date]"
+    - "Market Research: [Report Name]"
+
+# ============================================================================
+# GENERATION INSTRUCTIONS FOR AI
+# ============================================================================
+generation_instructions:
+  section_order: |
+    Generate sections in the exact order specified in this template.
+    Do not skip sections. If data is missing, use appropriate flags.
+  
+  data_extraction: |
+    - ONLY use information provided in source documents
+    - DO NOT use external knowledge or general industry data
+    - If specific data is missing, flag it rather than guessing
+    - Every number, metric, claim must have a citation
+  
+  quality_standards: |
+    - Each section must be comprehensive but concise
+    - Use the specified tone and format for each section
+    - Include data flags when information is missing
+    - Add citations for all factual statements
+    - Follow the structure and subsections exactly
+  
+  fallbacks: |
+    - If a subsection has no data: Include header but use appropriate flag
+    - If entire section has minimal data: Write 1 paragraph with flags
+    - Never invent data to fill gaps - always flag missing information
+
