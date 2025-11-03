@@ -1,22 +1,24 @@
 from langgraph.graph import StateGraph, START, END
 from models import MemoState, DEFAULT_TEMPLATE, ExtractedData
 from optimized_document_parser import OptimizedDocumentParser
-from hierarchical_summarizer import HierarchicalSummarizer
+from optimized_extractors import OptimizedExtractionCoordinator
 from memo_generator import MemoGenerator
 from financial_analyzer import FinancialAnalyzer
+from summary_cache import SummaryCache
 from typing import Dict, Any
 import asyncio
 import time
 
 
 def create_optimized_memo_pipeline():
-    """Create optimized LangGraph pipeline with hierarchical summarization"""
+    """Create optimized LangGraph pipeline with direct extraction (no summarization)"""
     
     # Initialize components
     document_parser = OptimizedDocumentParser()
-    summarizer = HierarchicalSummarizer()
+    extraction_coordinator = OptimizedExtractionCoordinator()
     memo_generator = MemoGenerator()
     financial_analyzer = FinancialAnalyzer()
+    cache = SummaryCache()
     
     # Define node functions
     async def parse_and_chunk_documents_node(state: MemoState) -> MemoState:
@@ -93,47 +95,16 @@ def create_optimized_memo_pipeline():
             
         return state
     
-    async def hierarchical_summarization_node(state: MemoState) -> MemoState:
-        """Run hierarchical summarization to extract information"""
+    async def extract_information_node(state: MemoState) -> MemoState:
+        """Run direct extraction with caching (no summarization layers)"""
         start_time = time.time()
-        print(f"[{state['job_id']}] Running hierarchical summarization...")
+        print(f"[{state['job_id']}] Running optimized extraction...")
         
         try:
-            # Define extraction types needed
-            extraction_types = ["progress", "financial", "market", "company", "team"]
-            
-            # Run 3-layer hierarchical summarization
-            result = await summarizer.summarize_documents(
-                state["parsed_chunks"],
-                extraction_types
+            # Run direct extraction from chunks (no summarization)
+            extracted_data = await extraction_coordinator.extract_all(
+                state["parsed_chunks"]
             )
-            
-            # Convert extracted data to proper model instances
-            extracted_data = {}
-            for extract_type, data in result['extracted_data'].items():
-                if isinstance(data, dict) and 'error' not in data:
-                    # Remove cost metadata before creating model instance
-                    cost = data.pop('_cost', 0)
-                    
-                    # Map to proper model class
-                    model_mapping = {
-                        'progress': 'ProgressData',
-                        'financial': 'FinancialData', 
-                        'market': 'MarketData',
-                        'company': 'CompanyData',
-                        'team': 'TeamData'
-                    }
-                    
-                    if extract_type in model_mapping:
-                        model_class = getattr(__import__('models'), model_mapping[extract_type])
-                        try:
-                            # Create model instance, handling None values
-                            filtered_data = {k: v for k, v in data.items() if v is not None}
-                            extracted_data[extract_type] = model_class(**filtered_data)
-                        except Exception as e:
-                            print(f"  Warning: Could not create {extract_type} model: {e}")
-                            # Create empty model as fallback
-                            extracted_data[extract_type] = model_class()
             
             # Merge financial analysis results
             if state.get("financial_analyses"):
@@ -143,23 +114,24 @@ def create_optimized_memo_pipeline():
             state["processing_stage"] = "information_extracted"
             
             elapsed = time.time() - start_time
+            
+            # Get cache statistics
+            cache_stats = await cache.get_cache_stats()
+            cache_hits = cache_stats.get('recent_cache_hits', 0)
+            
             print(f"  ✓ Extraction completed in {elapsed:.1f}s")
-            print(f"  💰 Total cost: ${result['total_cost']:.4f}")
-            print(f"  📊 Cache hits: {result['summary_stats']['cache_hits']}")
+            print(f"  📊 Cache hits: {cache_hits}")
             
             # Store statistics
             if not hasattr(state, 'statistics'):
                 state['statistics'] = {}
             state['statistics'].update({
                 'extraction_time': elapsed,
-                'extraction_cost': result['total_cost'],
-                'cache_hits': result['summary_stats']['cache_hits'],
-                'l1_summaries': result['summary_stats']['l1_summaries'],
-                'l2_summaries': result['summary_stats']['l2_summaries']
+                'cache_hits': cache_hits,
             })
             
         except Exception as e:
-            error_msg = f"Hierarchical summarization failed: {str(e)}"
+            error_msg = f"Extraction failed: {str(e)}"
             state["error_messages"].append(error_msg)
             print(f"  ✗ {error_msg}")
             import traceback
@@ -201,7 +173,6 @@ def create_optimized_memo_pipeline():
                 
                 print(f"\n📊 Pipeline Statistics:")
                 print(f"  Total processing time: {state['statistics']['total_time']:.1f}s")
-                print(f"  Total cost: ${state['statistics'].get('extraction_cost', 0):.4f}")
                 print(f"  Chunks processed: {state['statistics'].get('chunk_count', 0)}")
                 print(f"  Cache efficiency: {state['statistics'].get('cache_hits', 0)} hits")
             
@@ -218,14 +189,14 @@ def create_optimized_memo_pipeline():
     # Add nodes
     workflow.add_node("parse_and_chunk_documents", parse_and_chunk_documents_node)
     workflow.add_node("analyze_financial_files", analyze_financial_files_node)
-    workflow.add_node("hierarchical_summarization", hierarchical_summarization_node)
+    workflow.add_node("extract_information", extract_information_node)
     workflow.add_node("generate_memo", generate_memo_node)
     
     # Define edges
     workflow.add_edge(START, "parse_and_chunk_documents")
     workflow.add_edge("parse_and_chunk_documents", "analyze_financial_files")
-    workflow.add_edge("analyze_financial_files", "hierarchical_summarization")
-    workflow.add_edge("hierarchical_summarization", "generate_memo")
+    workflow.add_edge("analyze_financial_files", "extract_information")
+    workflow.add_edge("extract_information", "generate_memo")
     workflow.add_edge("generate_memo", END)
     
     # Compile and return
@@ -336,7 +307,6 @@ async def run_optimized_memo_pipeline(
         if hasattr(final_state, 'statistics'):
             response["performance"] = {
                 "total_time_seconds": final_state['statistics'].get('total_time', 0),
-                "total_cost_usd": final_state['statistics'].get('extraction_cost', 0),
                 "chunks_processed": final_state['statistics'].get('chunk_count', 0),
                 "cache_hits": final_state['statistics'].get('cache_hits', 0)
             }

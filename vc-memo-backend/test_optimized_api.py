@@ -10,7 +10,7 @@ from datetime import datetime
 async def test_optimized_memo_generation():
     """Test the optimized memo generation API with cost tracking"""
 
-    base_url = "http://localhost:8000"
+    base_url = "https://dealysis.onrender.com"
 
     print("VC Memo API Test Script - OPTIMIZED PIPELINE")
     print("=" * 50)
@@ -186,6 +186,46 @@ async def test_optimized_memo_generation():
                             print(
                                 f"\nTotal memo length: {len(memo_result['memo_content'])} characters"
                             )
+
+                            # Export memo to file
+                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                            output_dir = script_dir / "exported_memos"
+                            output_dir.mkdir(exist_ok=True)
+
+                            memo_filename = output_dir / f"memo_zinnia_{timestamp}.md"
+                            with open(memo_filename, "w", encoding="utf-8") as f:
+                                f.write("# Investment Memo: Zinnia\n\n")
+                                f.write(f"Generated: {datetime.now().isoformat()}\n")
+                                f.write(f"Job ID: {job_id}\n")
+                                f.write(f"Company: Zinnia\n")
+                                f.write(f"Funding Stage: Series A\n\n")
+                                f.write("---\n\n")
+                                f.write(memo_result["memo_content"])
+
+                                # Add metadata at the end
+                                f.write("\n\n---\n\n## Metadata\n\n")
+
+                                if "confidence_scores" in memo_result:
+                                    f.write("### Confidence Scores\n\n")
+                                    for section, score in memo_result[
+                                        "confidence_scores"
+                                    ].items():
+                                        f.write(f"- **{section}**: {score:.2f}\n")
+                                    f.write("\n")
+
+                                if "flagged_items" in memo_result:
+                                    f.write("### Flagged Items\n\n")
+                                    for item in memo_result["flagged_items"]:
+                                        f.write(
+                                            f"- **{item['section']}**: {item['reason']}\n"
+                                        )
+                                        if item.get("missing_data"):
+                                            f.write(
+                                                f"  - Missing: {', '.join(item['missing_data'])}\n"
+                                            )
+                                    f.write("\n")
+
+                            print(f"\n✓ Memo exported to: {memo_filename}")
                         else:
                             print("Memo content not found in response")
 
@@ -271,23 +311,11 @@ async def test_optimized_memo_generation():
         print(f"Total time: {total_time:.1f} seconds")
         print(f"Final status: {status}")
 
-        # Get cache statistics
-        print("\nChecking cache statistics...")
-        from summary_cache import SummaryCache
-
-        cache = SummaryCache()
-        stats = await cache.get_cache_stats()
-        print(f"\nCache Statistics:")
-        print(f"  - Total entries: {stats['total_entries']}")
-        print(f"  - Recent hits: {stats['recent_cache_hits']}")
-        print(f"  - Cost saved: ${stats['estimated_cost_saved']:.2f}")
-        print(f"  - Cache size: {stats['cache_size_mb']:.2f} MB")
-
 
 async def test_health_check():
     """Test the health endpoint"""
     async with aiohttp.ClientSession() as session:
-        async with session.get("http://localhost:8000/health") as resp:
+        async with session.get("https://dealysis.onrender.com/health") as resp:
             result = await resp.json()
             print(f"Health check: {result}")
 

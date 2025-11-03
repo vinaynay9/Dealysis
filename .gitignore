@@ -9,3 +9,4 @@ venv
 .env.test
 .env.production
 __pycache__
+exported_memos/
