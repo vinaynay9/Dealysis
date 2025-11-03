@@ -1,0 +1,36 @@
+
+    TechStartup Inc - Management Team
+    
+    Founders:
+    
+    John Smith - CEO & Co-founder
+    - Previously VP Engineering at MegaCorp (acquired for $500M)
+    - 15 years experience in enterprise software
+    - MS Computer Science, Stanford University
+    - Led product team that built $100M ARR product line
+    
+    Sarah Johnson - CTO & Co-founder
+    - Previously Principal Engineer at TechGiant
+    - Expert in distributed systems and AI/ML
+    - PhD Computer Science, MIT
+    - Published 12 papers on workflow automation
+    - 2 patents in process optimization
+    
+    Key Employees:
+    - Mike Chen - VP Sales (ex-Salesforce, built team from 0 to $50M ARR)
+    - Lisa Park - VP Marketing (ex-HubSpot, grew pipeline 300% YoY)
+    - David Brown - VP Engineering (ex-Google, managed 100+ engineers)
+    - Amy Wilson - CFO (ex-Deloitte, took 2 companies through Series B)
+    
+    Board & Advisors:
+    - Tom Anderson - Board Member (Partner at TopTier Ventures)
+    - Jennifer Lee - Board Observer (Principal at MegaFund)
+    - Robert Taylor - Advisor (Former CEO of WorkflowGiant, $2B exit)
+    - Maria Garcia - Advisor (CPO at Fortune 500 company)
+    
+    Team Highlights:
+    - Combined 3 successful exits totaling $1.2B
+    - Deep domain expertise in workflow automation
+    - Strong network in target customer segments
+    - Previously worked together at 2 companies
+    

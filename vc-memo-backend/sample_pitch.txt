@@ -1,0 +1,36 @@
+
+    TechStartup Inc - Series A Pitch Deck
+    
+    Company Overview:
+    TechStartup Inc is a B2B SaaS platform that automates workflow management for enterprises.
+    Our mission is to increase productivity by 50% through AI-powered automation.
+    
+    Business Model:
+    - Subscription-based SaaS model
+    - Tiered pricing: Starter ($99/mo), Professional ($299/mo), Enterprise (custom)
+    - Annual contracts with quarterly billing
+    
+    Products:
+    1. WorkflowAI - Core automation platform
+    2. Analytics Dashboard - Real-time insights
+    3. Integration Hub - 50+ native integrations
+    
+    Market Opportunity:
+    - Total Addressable Market (TAM): $12.5 billion
+    - Serviceable Addressable Market (SAM): $3.2 billion
+    - Serviceable Obtainable Market (SOM): $180 million
+    - Market growing at 25% CAGR
+    
+    Target Segments:
+    - Mid-market enterprises (500-5000 employees)
+    - Technology and financial services sectors
+    - Companies with complex workflows
+    
+    Competitive Landscape:
+    - Main competitors: AutomateNow, WorkflowPro, ProcessMaster
+    - Our advantages: 
+      * 70% faster implementation
+      * No-code platform
+      * Superior AI capabilities
+      * Better pricing model
+    

@@ -1,0 +1,48 @@
+
+# Investment Memo: Example Company
+
+## 1. EXECUTIVE SUMMARY
+
+This section provides a high-level overview of the investment opportunity, including company background, stage, investment ask, and key investment thesis points.
+
+The executive summary should be concise and compelling, highlighting the most important aspects that would influence an investment decision.
+
+## 2. COMPANY DESCRIPTION
+
+This section covers the company's mission, business model, core products and services, and value proposition to customers.
+
+Detail the company's approach to solving customer problems and how it creates value in the market.
+
+## 3. MARKET ANALYSIS
+
+Analyze the total addressable market (TAM), serviceable addressable market (SAM), and serviceable obtainable market (SOM).
+
+Discuss market growth trends, target customer segments, competitive landscape, and the company's positioning within the market.
+
+## 4. BUSINESS METRICS & TRACTION
+
+Present key operational and financial metrics including revenue (ARR/MRR), growth rates, customer metrics, unit economics, and any other relevant traction indicators.
+
+Highlight momentum and progress towards key milestones.
+
+## 5. FINANCIAL OVERVIEW
+
+Cover funding history, current financial position, cap table structure, and valuation details.
+
+Include information about previous rounds, current investors, and financial runway.
+
+## 6. MANAGEMENT TEAM
+
+Provide background on founders and key team members, including relevant experience, past successes, and domain expertise.
+
+Highlight why this team is well-positioned to execute on the opportunity.
+
+## 7. INVESTMENT THESIS & RISK ASSESSMENT
+
+Articulate the key reasons to invest, including competitive advantages, market timing, and growth potential.
+
+Identify and analyze key risks, including market risks, execution risks, competitive risks, and mitigation strategies.
+
+## 8. RECOMMENDATION
+
+Provide a clear investment recommendation (invest/pass/defer) with supporting rationale based on the analysis above.

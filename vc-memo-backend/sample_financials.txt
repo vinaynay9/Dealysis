@@ -1,0 +1,42 @@
+
+    TechStartup Inc - Financial Overview
+    
+    Revenue Metrics:
+    - Annual Recurring Revenue (ARR): $4.2 million
+    - Monthly Recurring Revenue (MRR): $350,000
+    - Month-over-Month Growth: 15%
+    - Year-over-Year Growth: 180%
+    - Customer Count: 127 enterprise customers
+    
+    Unit Economics:
+    - Customer Acquisition Cost (CAC): $12,000
+    - Customer Lifetime Value (LTV): $84,000
+    - LTV/CAC Ratio: 7.0
+    - Monthly Churn Rate: 1.5%
+    - Net Revenue Retention: 125%
+    
+    Financial Position:
+    - Monthly Burn Rate: $450,000
+    - Current Runway: 18 months
+    - Cash in Bank: $8.1 million
+    
+    Funding History:
+    - Seed Round: $2M (2021, 15% dilution)
+    - Pre-Series A: $5M (2022, 12% dilution)
+    - Total Raised: $7M
+    
+    Current Round:
+    - Seeking: $15M Series A
+    - Pre-money Valuation: $60M
+    - Use of Funds:
+      * 40% Sales & Marketing
+      * 35% Product Development
+      * 15% Operations
+      * 10% Reserve
+    
+    Cap Table:
+    - Founders: 52%
+    - Employees: 15%
+    - Seed Investors: 18%
+    - Pre-Series A Investors: 15%
+    
