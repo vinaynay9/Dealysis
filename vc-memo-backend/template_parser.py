@@ -6,6 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from llm_config import get_extraction_llm
 import json
 import re
+import yaml
 
 
 class TemplateParser:
@@ -20,7 +21,11 @@ class TemplateParser:
         content = template_doc["content"]
         file_type = filename.split(".")[-1].lower()
 
-        # Extract structured text with headings
+        # Handle YAML templates directly (already structured)
+        if file_type in ["yaml", "yml"]:
+            return self._parse_yaml_template(content)
+
+        # Extract structured text with headings for other formats
         if file_type == "pdf":
             structured_text = self._extract_pdf_structure(content)
         elif file_type in ["docx", "doc"]:
@@ -28,7 +33,9 @@ class TemplateParser:
         elif file_type in ["txt", "md"]:
             structured_text = self._extract_text_structure(content)
         else:
-            raise ValueError(f"Unsupported template file type: {file_type}. Supported: PDF, DOCX, TXT, MD")
+            raise ValueError(
+                f"Unsupported template file type: {file_type}. Supported: PDF, DOCX, TXT, MD, YAML, YML"
+            )
 
         # Use LLM to extract template structure
         template_structure = await self._extract_template_structure(structured_text)
@@ -102,6 +109,22 @@ class TemplateParser:
             print(f"Error extracting DOCX structure: {e}")
 
         return "\n".join(structured_lines)
+
+    def _parse_yaml_template(self, content: bytes) -> Dict[str, Any]:
+        """Parse YAML template file directly (no LLM needed)"""
+        try:
+            yaml_text = content.decode("utf-8", errors="ignore")
+            template_structure = yaml.safe_load(yaml_text)
+
+            # Validate and normalize structure
+            return self._validate_template_structure(template_structure)
+
+        except yaml.YAMLError as e:
+            print(f"Error parsing YAML template: {e}")
+            return self._get_fallback_template()
+        except Exception as e:
+            print(f"Error processing YAML template: {e}")
+            return self._get_fallback_template()
 
     def _extract_text_structure(self, content: bytes) -> str:
         """Extract structure from plain text/markdown files"""
@@ -186,11 +209,12 @@ Return ONLY valid JSON, no additional text.
         try:
             # Use rate limiter for template parsing
             from rate_limiter import RateLimiter
+
             rate_limiter = RateLimiter(max_retries=5, initial_delay=1.0, max_delay=60.0)
-            
+
             response = await rate_limiter.execute(
                 self.llm.ainvoke,
-                prompt.format_messages(structured_text=structured_text[:8000])
+                prompt.format_messages(structured_text=structured_text[:8000]),
             )
 
             # Extract JSON from response
@@ -270,4 +294,3 @@ Return ONLY valid JSON, no additional text.
         from models import DEFAULT_TEMPLATE
 
         return DEFAULT_TEMPLATE
-

@@ -21,6 +21,7 @@ python-multipart==0.0.20
 python-pptx==1.0.2
 pandas==2.2.2
 openpyxl==3.1.2
+pyyaml==6.0.1
 tomli==2.0.1
 uvloop==0.22.1
 watchfiles==1.1.1

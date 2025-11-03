@@ -19,57 +19,71 @@ EXTRACTION_PROMPTS = {
 
 TEXT: {text}
 
+CRITICAL: Extract ALL numerical values, dates, percentages, and metrics. Be thorough and comprehensive.
+
 Extract the following metrics if present:
-- ARR (Annual Recurring Revenue)
-- MRR (Monthly Recurring Revenue)
-- Monthly burn rate
-- Runway in months
-- Churn rate (monthly/annual)
-- Growth rate (MoM/YoY)
-- Customer count
-- CAC (Customer Acquisition Cost)
-- LTV (Lifetime Value)
+- ARR (Annual Recurring Revenue) - include exact amounts with currency
+- MRR (Monthly Recurring Revenue) - include exact amounts with currency
+- Monthly burn rate - include exact amounts
+- Runway in months - include exact number
+- Churn rate (monthly/annual) - include percentages
+- Growth rate (MoM/YoY) - include percentages and timeframes
+- Customer count - include exact numbers
+- CAC (Customer Acquisition Cost) - include exact amounts
+- LTV (Lifetime Value) - include exact amounts
+- Unit economics ratios (LTV/CAC, etc.)
+- Revenue retention rates
+- Any time-series data with dates
 
 Output JSON format:
 {{
-  "arr": "value if found, null otherwise",
-  "mrr": "value if found, null otherwise",
-  "burn_rate": "value if found, null otherwise",
+  "arr": "value if found (include currency and time period), null otherwise",
+  "mrr": "value if found (include currency and time period), null otherwise",
+  "burn_rate": "value if found (include currency and period), null otherwise",
   "runway_months": number or null,
-  "churn_rate": "value if found, null otherwise",
-  "growth_rate_mom": "value if found, null otherwise",
-  "growth_rate_yoy": "value if found, null otherwise",
-  "customer_count": "value if found, null otherwise",
-  "cac": "value if found, null otherwise",
-  "ltv": "value if found, null otherwise"
+  "churn_rate": "value if found (include period), null otherwise",
+  "growth_rate_mom": "value if found (include percentage), null otherwise",
+  "growth_rate_yoy": "value if found (include percentage), null otherwise",
+  "customer_count": "value if found (include exact number), null otherwise",
+  "cac": "value if found (include currency), null otherwise",
+  "ltv": "value if found (include currency), null otherwise"
 }}
 
-Only include values explicitly stated in the text. Return valid JSON only.""",
+IMPORTANT: Capture ALL numerical values, dates, and metrics mentioned. Include context like time periods, currencies, and units. Return valid JSON only.""",
     "financial": """Extract high-level funding and cap table information from this text.
 
 TEXT: {text}
 
+CRITICAL: Extract ALL funding-related information including the investment ask and use of funds.
+
 Look for:
-- Previous funding rounds (Seed, Series A, etc.)
-- Total funding raised to date
-- Last round valuation
-- Current round valuation target
+- Previous funding rounds (Seed, Series A, etc.) - include amounts, dates, investors
+- Total funding raised to date - include exact amount
+- Last round valuation - include exact amount and date
+- Current round valuation target (pre-money/post-money) - include exact amount
+- Investment ask / Current round size - CRITICAL: How much the company is raising NOW
+- Use of funds - CRITICAL: How the funds will be allocated (e.g., "40% sales, 35% product")
+- Funding stage (Seed, Series A, Series B, etc.)
 - Ownership percentages by investor type
 - Liquidation preferences
 - Board composition
+- Valuation details (pre-money, post-money, implied valuation)
 
 Output JSON format:
 {{
-  "previous_rounds": ["list of rounds like 'Seed $2M', 'Series A $10M'"],
-  "total_funding_raised": "total amount if stated",
-  "last_valuation": "previous valuation",
-  "current_valuation": "current round target",
+  "previous_rounds": ["list of rounds like 'Seed $2M (2021)', 'Series A $10M (2022)'"],
+  "total_funding_raised": "total amount if stated (include currency)",
+  "last_valuation": "previous valuation (include amount and date)",
+  "current_valuation": "current round target (include pre/post-money if specified)",
+  "investment_ask": "amount company is raising in current round (CRITICAL - must extract if mentioned)",
+  "current_round_size": "same as investment_ask (alternative field)",
+  "use_of_funds": "how funds will be allocated (e.g., '40% sales & marketing, 35% product development')",
   "ownership_percentages": {{"founders": "X%", "employees": "Y%", "investors": "Z%"}},
   "liquidation_preferences": "preference details",
   "board_composition": "board member details"
 }}
 
-Only extract explicitly stated information. Return valid JSON only.""",
+IMPORTANT: The investment_ask and use_of_funds are critical fields - always extract if mentioned anywhere in the text. Include exact amounts, percentages, and dates. Return valid JSON only.""",
     "market": """Extract market opportunity and competitive information from this text.
 
 TEXT: {text}
@@ -106,6 +120,8 @@ Look for:
 - Products or services
 - Value proposition
 - Go-to-market strategy
+- Funding stage (Seed, Series A, Series B, etc.) - CRITICAL
+- Current round details (round name, target amount, etc.) - CRITICAL
 
 Output JSON format:
 {{
@@ -114,10 +130,12 @@ Output JSON format:
   "business_model": "how company makes money",
   "products": ["list of products/services"],
   "value_proposition": "key value prop",
-  "go_to_market": "GTM strategy"
+  "go_to_market": "GTM strategy",
+  "funding_stage": "funding stage if mentioned (e.g., 'Series A', 'Seed', 'Series B')",
+  "current_round_details": "details about current fundraising round (round name, target amount, etc.)"
 }}
 
-Return valid JSON only.""",
+IMPORTANT: Always extract funding_stage and current_round_details if mentioned. Return valid JSON only.""",
     "team": """Extract team and leadership information from this text.
 
 TEXT: {text}

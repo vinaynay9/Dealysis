@@ -58,6 +58,11 @@ class FinancialData(ExtractedData):
     total_funding_raised: Optional[str] = None
     last_valuation: Optional[str] = None
     current_valuation: Optional[str] = None
+    investment_ask: Optional[str] = None  # Amount company is raising in current round
+    current_round_size: Optional[str] = (
+        None  # Alternative field name for investment ask
+    )
+    use_of_funds: Optional[str] = None  # How funds will be allocated
     ownership_percentages: Optional[Dict[str, str]] = None
     liquidation_preferences: Optional[str] = None
     board_composition: Optional[str] = None
@@ -84,6 +89,8 @@ class CompanyData(ExtractedData):
     products: Optional[List[str]] = None
     value_proposition: Optional[str] = None
     go_to_market: Optional[str] = None
+    funding_stage: Optional[str] = None  # Seed, Series A, Series B, etc.
+    current_round_details: Optional[str] = None  # Round name, target amount, etc.
 
 
 class TeamData(ExtractedData):

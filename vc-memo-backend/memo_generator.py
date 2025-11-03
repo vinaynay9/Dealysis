@@ -122,22 +122,55 @@ class MemoGenerator:
 
         prompt = ChatPromptTemplate.from_template(
             """
-You are writing the "{title}" section of a venture capital investment memo.
+You are a senior venture capital analyst writing the "{title}" section of an investment memo for your investment committee.
 
 Section description: {description}
 Required length: {min_paragraphs} to {max_paragraphs} paragraphs
 
-Available data:
+Available extracted data:
 {data}
 
-Instructions:
-1. Write in a professional VC memo style
-2. Be concise but comprehensive
-3. Use specific data points when available
-4. Note any critical missing information
-5. Maintain an analytical, objective tone
+CRITICAL INSTRUCTIONS - Think like a VC analyst:
 
-Write the section content:
+1. ANALYTICAL RIGOR:
+   - Use ALL specific numbers, metrics, and data points provided. Never omit quantitative information.
+   - Include exact amounts (e.g., "$5.2M ARR", "Series A $15M", "45% MoM growth")
+   - Include dates, timeframes, and percentages when available
+   - Cite specific sources if data came from different documents
+
+2. COMPREHENSIVE DETAIL:
+   - Investment ask and funding stage MUST be included if present in the data
+   - Use of funds allocation must be included if available
+   - All financial metrics (ARR, MRR, burn rate, runway) must be explicitly stated
+   - Market size (TAM/SAM/SOM) must be included with exact numbers
+   - Team background must include specific past experiences and achievements
+
+3. VC PERSPECTIVE:
+   - Analyze the data critically - highlight strengths AND concerns
+   - Compare metrics to industry benchmarks where relevant
+   - Identify what's impressive vs. what's concerning
+   - Note gaps or missing critical information explicitly
+   - Consider what matters most to investors at this stage
+
+4. MISSING INFORMATION:
+   - If critical data is missing (investment ask, key metrics, etc.), explicitly state: "This information was not provided in the materials"
+   - Flag important omissions that would affect investment decision
+   - Don't make up or infer data that isn't present
+
+5. PROFESSIONAL TONE:
+   - Write in a concise, analytical style typical of VC memos
+   - Be objective and data-driven
+   - Use professional terminology (ARR, MRR, CAC, LTV, runway, etc.)
+   - Structure paragraphs logically with clear topic sentences
+
+SPECIFIC REQUIREMENTS:
+- ALWAYS include investment ask/round size if present in financial data
+- ALWAYS include use of funds if present
+- ALWAYS include funding stage if present
+- ALWAYS include exact numerical values (don't round unnecessarily)
+- ALWAYS note when critical information is missing
+
+Write the section content now, ensuring you include ALL available details and explicitly note any missing critical information:
 """
         )
 
@@ -161,17 +194,66 @@ Write the section content:
         return content, confidence
 
     def _format_data_for_prompt(self, data: Dict[str, Any]) -> str:
-        """Format extracted data for LLM prompt"""
+        """Format extracted data for LLM prompt with emphasis on key metrics"""
         formatted = []
+
+        # Define critical fields that should be highlighted
+        critical_fields = {
+            "financial": [
+                "investment_ask",
+                "current_round_size",
+                "use_of_funds",
+                "funding_stage",
+                "current_valuation",
+                "total_funding_raised",
+            ],
+            "company": ["funding_stage", "current_round_details", "company_name"],
+            "progress": [
+                "arr",
+                "mrr",
+                "burn_rate",
+                "runway_months",
+                "growth_rate_mom",
+                "growth_rate_yoy",
+                "cac",
+                "ltv",
+            ],
+            "market": ["tam", "sam", "som", "market_growth_rate"],
+        }
 
         for category, values in data.items():
             if isinstance(values, dict):
                 formatted.append(f"\n{category.upper()}:")
-                for key, value in values.items():
-                    if value and key != "confidence":
-                        formatted.append(f"  - {key}: {value}")
 
-        return "\n".join(formatted) if formatted else "No specific data available"
+                # First, list critical fields if present
+                critical_in_category = critical_fields.get(category, [])
+                critical_found = []
+                regular_fields = []
+
+                for key, value in values.items():
+                    if key == "confidence":
+                        continue
+                    if value:
+                        if key in critical_in_category:
+                            critical_found.append((key, value))
+                        else:
+                            regular_fields.append((key, value))
+
+                # Format critical fields with emphasis
+                if critical_found:
+                    formatted.append("  CRITICAL METRICS:")
+                    for key, value in critical_found:
+                        formatted.append(f"  ⚠ {key}: {value}")
+                    formatted.append("")
+
+                # Format regular fields
+                for key, value in regular_fields:
+                    formatted.append(f"  - {key}: {value}")
+
+        if not formatted:
+            return "No specific data available - this section will need to be written based on general context."
+
+        return "\n".join(formatted)
 
     def _calculate_section_confidence(self, data: Dict[str, Any]) -> float:
         """Calculate confidence for a section based on available data"""
@@ -198,14 +280,39 @@ Write the section content:
         missing = []
 
         required_data = {
-            "exec_summary": ["company_name", "funding_ask", "valuation"],
-            "company_overview": ["mission", "business_model", "products"],
-            "market_opportunity": ["tam", "sam", "competitors"],
-            "progress_metrics": ["arr", "mrr", "growth_rate"],
-            "financial_overview": ["total_funding_raised", "last_valuation"],
+            "exec_summary": [
+                "company_name",
+                "investment_ask",
+                "current_round_size",
+                "funding_stage",
+                "current_valuation",
+                "use_of_funds",
+            ],
+            "company_overview": [
+                "mission",
+                "business_model",
+                "products",
+                "funding_stage",
+            ],
+            "market_opportunity": ["tam", "sam", "competitors", "market_growth_rate"],
+            "progress_metrics": [
+                "arr",
+                "mrr",
+                "growth_rate_mom",
+                "growth_rate_yoy",
+                "burn_rate",
+            ],
+            "financial_overview": [
+                "total_funding_raised",
+                "investment_ask",
+                "current_round_size",
+                "use_of_funds",
+                "current_valuation",
+                "last_valuation",
+            ],
             "team": ["founders", "relevant_experience"],
-            "thesis_risks": ["competitive_advantages", "key_risks"],
-            "recommendation": ["investment_decision", "rationale"],
+            "thesis_risks": ["competitive_advantages"],
+            "recommendation": [],
         }
 
         required = required_data.get(section_key, [])

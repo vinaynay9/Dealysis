@@ -6,6 +6,7 @@ import uuid
 import asyncio
 from datetime import datetime
 from pipeline import run_memo_pipeline
+from optimized_pipeline import run_optimized_memo_pipeline
 from models import JobStatus
 from template_parser import TemplateParser
 
@@ -38,7 +39,7 @@ async def upload_and_process(
     funding_stage: str = Form(...),
     template_file: Optional[UploadFile] = File(
         None,
-        description="Optional: Example memo (PDF/DOCX/TXT/MD) to extract structure from",
+        description="Optional: Template memo (PDF/DOCX/TXT/MD/YAML) to extract structure from",
     ),
 ):
     """Upload deal documents and start memo generation"""
@@ -62,10 +63,10 @@ async def upload_and_process(
             file_size = len(content)
             total_size += file_size
 
-            # Limit individual file size to 10MB
-            if file_size > 10 * 1024 * 1024:
+            # Limit individual file size to 50MB (VC pitch decks can be large)
+            if file_size > 50 * 1024 * 1024:
                 raise HTTPException(
-                    status_code=400, detail=f"File {file.filename} exceeds 10MB limit"
+                    status_code=400, detail=f"File {file.filename} exceeds 50MB limit"
                 )
 
             documents.append(
@@ -76,10 +77,10 @@ async def upload_and_process(
                 }
             )
 
-        # Limit total upload to 50MB
-        if total_size > 50 * 1024 * 1024:
+        # Limit total upload to 200MB (to accommodate multiple large documents)
+        if total_size > 200 * 1024 * 1024:
             raise HTTPException(
-                status_code=400, detail="Total upload exceeds 50MB limit"
+                status_code=400, detail="Total upload exceeds 200MB limit"
             )
 
         # Initialize job first
@@ -160,10 +161,12 @@ async def process_memo_async(
         else:
             jobs[job_id]["progress"] = "Using default template..."
 
-        jobs[job_id]["progress"] = "Running LangGraph pipeline..."
+        jobs[job_id]["progress"] = "Running optimized LangGraph pipeline..."
 
-        # Run the pipeline with parsed template structure
-        result = await run_memo_pipeline(job_id, documents, template_structure)
+        # Run the optimized pipeline with parsed template structure
+        result = await run_optimized_memo_pipeline(
+            job_id, documents, template_structure
+        )
 
         if result["success"]:
             jobs[job_id]["status"] = JobStatus.COMPLETED
@@ -175,6 +178,9 @@ async def process_memo_async(
                 "funding_stage": funding_stage,
                 "generated_at": datetime.now().isoformat(),
             }
+            # Add performance metrics if available
+            if "performance" in result:
+                jobs[job_id]["performance"] = result["performance"]
             jobs[job_id]["progress"] = "Completed successfully"
         else:
             jobs[job_id]["status"] = JobStatus.FAILED
