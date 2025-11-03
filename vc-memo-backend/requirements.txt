@@ -12,6 +12,8 @@ jaraco.collections==5.1.0
 jinja2==3.1.6
 langchain==1.0.3
 langchain-openai==1.0.1
+openpyxl==3.1.2
+pandas==2.2.2
 pip-chill==1.0.3
 platformdirs==4.2.2
 pypdf2==3.0.1
@@ -19,10 +21,8 @@ python-docx==1.2.0
 python-dotenv==1.2.1
 python-multipart==0.0.20
 python-pptx==1.0.2
-pandas==2.2.2
-openpyxl==3.1.2
-pyyaml==6.0.1
 tomli==2.0.1
+uvicorn[standard]==0.32.1
 uvloop==0.22.1
 watchfiles==1.1.1
 websockets==15.0.1

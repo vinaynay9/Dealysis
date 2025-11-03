@@ -19,7 +19,7 @@ async def test_optimized_memo_generation():
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
     mock_data_dir = script_dir / "mock-data" / "zinnia"
-    template_path = project_root / "template_standard.yaml"
+    template_path = script_dir / "template_standard.yaml"
 
     # Verify files exist
     if not mock_data_dir.exists():
@@ -33,7 +33,7 @@ async def test_optimized_memo_generation():
     # List of files to upload from mock-data/zinnia
     zinnia_files = [
         "5.23  Zinnia Investor Deck.pdf",
-        "Email Chains.docx", 
+        "Email Chains.docx",
         "Financials.xlsx",
         "Zinnia Mock Diligence.docx",
     ]
@@ -78,7 +78,7 @@ async def test_optimized_memo_generation():
         print("TESTING OPTIMIZED MEMO GENERATION WITH ZINNIA MOCK DATA")
         print("=" * 70)
         print("1. Uploading documents and YAML template...")
-        
+
         start_upload_time = time.time()
 
         data = aiohttp.FormData()
@@ -121,13 +121,13 @@ async def test_optimized_memo_generation():
 
             print(f"\nUpload response: {json.dumps(result, indent=2)}")
             job_id = result["job_id"]
-            
+
         upload_time = time.time() - start_upload_time
         print(f"Upload completed in {upload_time:.1f} seconds")
 
         # 2. Poll for status
         print(f"\n2. Polling job status for job_id: {job_id}")
-        
+
         start_processing_time = time.time()
         status = "processing"
         attempts = 0
@@ -152,7 +152,7 @@ async def test_optimized_memo_generation():
 
                 status = status_result["status"]
                 progress = status_result.get("progress", "")
-                
+
                 # Only print if progress changed
                 if progress != last_progress:
                     elapsed = time.time() - start_processing_time
@@ -172,7 +172,9 @@ async def test_optimized_memo_generation():
                 async with session.get(f"{base_url}/memo/{job_id}") as resp:
                     if resp.status != 200:
                         error_text = await resp.text()
-                        print(f"Error retrieving memo: HTTP {resp.status} - {error_text}")
+                        print(
+                            f"Error retrieving memo: HTTP {resp.status} - {error_text}"
+                        )
                     else:
                         memo_result = await resp.json()
 
@@ -181,7 +183,9 @@ async def test_optimized_memo_generation():
                         print("=" * 70)
                         if "memo_content" in memo_result:
                             print(memo_result["memo_content"][:1000] + "...")
-                            print(f"\nTotal memo length: {len(memo_result['memo_content'])} characters")
+                            print(
+                                f"\nTotal memo length: {len(memo_result['memo_content'])} characters"
+                            )
                         else:
                             print("Memo content not found in response")
 
@@ -189,45 +193,59 @@ async def test_optimized_memo_generation():
                             print("\n" + "=" * 70)
                             print("CONFIDENCE SCORES")
                             print("=" * 70)
-                            for section, score in memo_result["confidence_scores"].items():
+                            for section, score in memo_result[
+                                "confidence_scores"
+                            ].items():
                                 print(f"{section}: {score:.2f}")
 
                         if "flagged_items" in memo_result:
                             print("\n" + "=" * 70)
-                            print(f"FLAGGED ITEMS ({len(memo_result['flagged_items'])})")
+                            print(
+                                f"FLAGGED ITEMS ({len(memo_result['flagged_items'])})"
+                            )
                             print("=" * 70)
                             for item in memo_result["flagged_items"]:
                                 print(f"- {item['section']}: {item['reason']}")
                                 if item.get("missing_data"):
-                                    print(f"  Missing: {', '.join(item['missing_data'])}")
+                                    print(
+                                        f"  Missing: {', '.join(item['missing_data'])}"
+                                    )
 
                 # Check for performance metrics
                 async with session.get(f"{base_url}/status/{job_id}") as resp:
                     if resp.status == 200:
                         final_status = await resp.json()
-                        
+
                         print("\n" + "=" * 70)
                         print("PERFORMANCE METRICS")
                         print("=" * 70)
                         print(f"Total processing time: {total_time:.1f} seconds")
                         print(f"  - Upload time: {upload_time:.1f}s")
                         print(f"  - Pipeline time: {processing_time:.1f}s")
-                        
+
                         if "performance" in final_status:
                             perf = final_status["performance"]
                             print(f"\nPipeline Performance:")
-                            print(f"  - Total cost: ${perf.get('total_cost_usd', 0):.4f}")
-                            print(f"  - Chunks processed: {perf.get('chunks_processed', 0)}")
+                            print(
+                                f"  - Total cost: ${perf.get('total_cost_usd', 0):.4f}"
+                            )
+                            print(
+                                f"  - Chunks processed: {perf.get('chunks_processed', 0)}"
+                            )
                             print(f"  - Cache hits: {perf.get('cache_hits', 0)}")
-                            
+
                             # Cost analysis
                             print(f"\n💰 COST ANALYSIS:")
-                            cost = perf.get('total_cost_usd', 0)
+                            cost = perf.get("total_cost_usd", 0)
                             if cost < 0.25:
-                                print(f"  ✅ SUCCESS: Cost ${cost:.4f} is under target of $0.25")
+                                print(
+                                    f"  ✅ SUCCESS: Cost ${cost:.4f} is under target of $0.25"
+                                )
                             else:
-                                print(f"  ⚠️  WARNING: Cost ${cost:.4f} exceeds target of $0.25")
-                                
+                                print(
+                                    f"  ⚠️  WARNING: Cost ${cost:.4f} exceeds target of $0.25"
+                                )
+
             except Exception as e:
                 print(f"Exception while retrieving memo: {e}")
 
@@ -252,10 +270,11 @@ async def test_optimized_memo_generation():
         print("=" * 70)
         print(f"Total time: {total_time:.1f} seconds")
         print(f"Final status: {status}")
-        
+
         # Get cache statistics
         print("\nChecking cache statistics...")
         from summary_cache import SummaryCache
+
         cache = SummaryCache()
         stats = await cache.get_cache_stats()
         print(f"\nCache Statistics:")

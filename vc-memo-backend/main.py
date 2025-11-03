@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from typing import List, Optional, Dict, Any
 import uuid
 import asyncio
+import os
 from datetime import datetime
 from pipeline import run_memo_pipeline
 from optimized_pipeline import run_optimized_memo_pipeline
