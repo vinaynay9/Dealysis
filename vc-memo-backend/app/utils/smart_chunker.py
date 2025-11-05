@@ -2,7 +2,7 @@ import re
 import tiktoken
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
-from text_preprocessor import TextPreprocessor
+from app.utils.text_preprocessor import TextPreprocessor
 
 
 @dataclass

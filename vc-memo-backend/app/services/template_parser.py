@@ -3,7 +3,7 @@ from docx import Document as DocxDocument
 import io
 from typing import Dict, Any, List, Optional
 from langchain_core.prompts import ChatPromptTemplate
-from llm_config import get_extraction_llm
+from app.core.config import get_extraction_llm
 import json
 import re
 import yaml

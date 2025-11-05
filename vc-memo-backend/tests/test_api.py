@@ -14,10 +14,10 @@ async def test_memo_generation():
     print("VC Memo API Test Script - Using Zinnia Mock Data")
     print("=" * 50)
 
-    # Get the project root directory (parent of vc-memo-backend)
+    # Get the project root directory (vc-memo-backend)
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
-    mock_data_dir = script_dir / "mock-data" / "zinnia"
+    mock_data_dir = project_root / "mock-data" / "zinnia"
     template_path = project_root / "template_standard.yaml"
 
     # Verify files exist

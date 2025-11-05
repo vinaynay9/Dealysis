@@ -16,9 +16,7 @@
 
 3. **Run the server:**
    ```bash
-   python main.py
-   # Or use the run script:
-   ./run_server.sh
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
 
 ## Testing
@@ -32,7 +30,7 @@
 
    ```bash
    # In another terminal
-   python test_api.py
+   python -m tests.test_api
    ```
 
 3. **Manual testing with curl:**
@@ -61,18 +59,35 @@
 - `DELETE /job/{job_id}` - Delete a job
 - `GET /health` - Health check
 
+## Project Structure
+
+```
+vc-memo-backend/
+├── app/
+│   ├── api/          # API routes and endpoints
+│   ├── core/         # Core configuration and models
+│   ├── services/     # Business logic (extractors, pipeline, etc.)
+│   └── utils/        # Utility functions (caching, rate limiting)
+├── tests/            # Test files
+├── mock-data/        # Sample data for testing
+├── requirements.txt  # Python dependencies
+└── render.yaml       # Deployment configuration
+```
+
 ## Architecture
 
 The system uses:
 
 - **FastAPI** for the REST API
 - **LangGraph** for orchestrating the memo generation pipeline
-- **OpenAI GPT-4** for information extraction and memo writing
-- **Async processing** for handling long-running tasks
+- **OpenAI GPT-4o/GPT-4o-mini** for information extraction and memo writing
+- **Async processing** with background tasks for long-running operations
+- **Caching** to reduce API costs and improve performance
 
 The pipeline:
 
-1. Parse documents (PDF, DOCX, TXT)
-2. Extract information in parallel (company, financials, market, team, progress)
-3. Generate memo sections based on template
-4. Compile final investment memo with confidence scores
+1. Parse documents using LangChain loaders (PDF, DOCX, XLSX, etc.)
+2. Analyze financial files separately for metrics extraction
+3. Extract information in parallel (company, financials, market, team, progress)
+4. Generate memo sections based on template structure
+5. Compile final investment memo with confidence scores and flagged items

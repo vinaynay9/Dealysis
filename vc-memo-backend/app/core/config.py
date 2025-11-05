@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def get_llm(model: str = "gpt-4", temperature: float = 0.3) -> ChatOpenAI:
+def get_llm(model: str = "gpt-4o", temperature: float = 0.3) -> ChatOpenAI:
     """Get OpenAI LLM instance with rate limiting configuration"""
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
@@ -22,9 +22,9 @@ def get_llm(model: str = "gpt-4", temperature: float = 0.3) -> ChatOpenAI:
 
 def get_extraction_llm() -> ChatOpenAI:
     """High-precision LLM for data extraction"""
-    return get_llm(model="gpt-4", temperature=0.1)
+    return get_llm(model="gpt-4o", temperature=0.1)
 
 
 def get_generation_llm() -> ChatOpenAI:
     """Creative LLM for memo writing"""
-    return get_llm(model="gpt-4", temperature=0.4)
+    return get_llm(model="gpt-4o", temperature=0.2)

@@ -1,36 +1,19 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 from typing import List, Optional, Dict, Any
 import uuid
-import asyncio
-import os
 from datetime import datetime
-from pipeline import run_memo_pipeline
-from optimized_pipeline import run_optimized_memo_pipeline
-from models import JobStatus
-from template_parser import TemplateParser
+from app.services.pipeline import run_memo_pipeline
+from app.core.models import JobStatus
+from app.services.template_parser import TemplateParser
 
-app = FastAPI(
-    title="VC Memo Automation API",
-    description="Generate investment memos from deal documents",
-    version="1.0.0",
-)
-
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Configure for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+router = APIRouter()
 
 # In-memory job storage (replace with Redis/DB in production)
 jobs: Dict[str, dict] = {}
 
 
-@app.post("/upload-and-process")
+@router.post("/upload-and-process")
 async def upload_and_process(
     background_tasks: BackgroundTasks,
     files: List[UploadFile] = File(
@@ -162,12 +145,10 @@ async def process_memo_async(
         else:
             jobs[job_id]["progress"] = "Using default template..."
 
-        jobs[job_id]["progress"] = "Running optimized LangGraph pipeline..."
+        jobs[job_id]["progress"] = "Running LangGraph pipeline..."
 
-        # Run the optimized pipeline with parsed template structure
-        result = await run_optimized_memo_pipeline(
-            job_id, documents, template_structure
-        )
+        # Run the pipeline with parsed template structure
+        result = await run_memo_pipeline(job_id, documents, template_structure)
 
         if result["success"]:
             jobs[job_id]["status"] = JobStatus.COMPLETED
@@ -194,7 +175,7 @@ async def process_memo_async(
         jobs[job_id]["progress"] = "Failed with exception"
 
 
-@app.get("/status/{job_id}")
+@router.get("/status/{job_id}")
 async def get_job_status(job_id: str):
     """Check job processing status"""
 
@@ -220,7 +201,7 @@ async def get_job_status(job_id: str):
     return response
 
 
-@app.get("/memo/{job_id}")
+@router.get("/memo/{job_id}")
 async def get_memo(job_id: str):
     """Get completed memo content"""
 
@@ -237,7 +218,7 @@ async def get_memo(job_id: str):
     return job["result"]
 
 
-@app.get("/memo/{job_id}/download")
+@router.get("/memo/{job_id}/download")
 async def download_memo(job_id: str):
     """Download memo as markdown file"""
 
@@ -261,7 +242,7 @@ async def download_memo(job_id: str):
     )
 
 
-@app.delete("/job/{job_id}")
+@router.delete("/job/{job_id}")
 async def delete_job(job_id: str):
     """Delete a job and its results"""
 
@@ -272,7 +253,7 @@ async def delete_job(job_id: str):
     return {"message": "Job deleted successfully"}
 
 
-@app.get("/health")
+@router.get("/health")
 async def health_check():
     """Health check endpoint"""
     return {
@@ -284,7 +265,7 @@ async def health_check():
     }
 
 
-@app.get("/")
+@router.get("/")
 async def root():
     """API information"""
     return {

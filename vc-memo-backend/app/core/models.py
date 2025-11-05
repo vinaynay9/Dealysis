@@ -17,6 +17,7 @@ class MemoState(TypedDict):
     uploaded_documents: List[Dict[str, Any]]
     template_structure: Dict[str, Any]
     parsed_chunks: List[str]
+    routed_chunks: Dict[str, List[Any]]  # Maps extractor names to their assigned chunks
     financial_analyses: List[Dict[str, Any]]
     extracted_data: Dict[str, Any]
     memo_sections: Dict[str, str]

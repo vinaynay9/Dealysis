@@ -1,6 +1,6 @@
 from langchain_core.prompts import ChatPromptTemplate
-from llm_config import get_generation_llm
-from rate_limiter import RateLimiter
+from app.core.config import get_generation_llm
+from app.utils.rate_limiter import RateLimiter
 from typing import Dict, Any, List
 from datetime import datetime
 import asyncio
