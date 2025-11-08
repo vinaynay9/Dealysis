@@ -28,3 +28,12 @@ def get_extraction_llm() -> ChatOpenAI:
 def get_generation_llm() -> ChatOpenAI:
     """Creative LLM for memo writing"""
     return get_llm(model="gpt-4o", temperature=0.2)
+
+
+def get_ollama_config() -> dict:
+    """Get Ollama configuration from environment variables"""
+    return {
+        "base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+        "model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
+        "enabled": os.getenv("OLLAMA_ENABLED", "true").lower() == "true",
+    }
