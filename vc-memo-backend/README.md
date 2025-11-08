@@ -2,22 +2,59 @@
 
 ## Setup
 
-1. **Install dependencies:**
+1. **Create a virtual environment (recommended):**
+
+   ```bash
+   # Create venv
+   python3 -m venv venv
+
+   # Activate it
+   # On macOS/Linux:
+   source venv/bin/activate
+   # On Windows:
+   # venv\Scripts\activate
+   ```
+
+2. **Install dependencies:**
 
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Set up environment variables:**
+3. **Set up environment variables:**
 
    ```bash
-   echo 'OPENAI_API_KEY=your_openai_api_key_here' > .env
+   cp env.example .env
+   # Then edit .env and add your OPENAI_API_KEY
    ```
 
-3. **Run the server:**
+4. **Run the server:**
    ```bash
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
+
+## CLI Tool
+
+Generate memos directly from the terminal:
+
+```bash
+python -m app.cli generate-memo \
+  --files path/to/deck.pdf path/to/financials.xlsx \
+  --company-name "Zinnia" \
+  --funding-stage "Series A" \
+  --output memo_zinnia.md
+```
+
+**Options:**
+
+- `--files`: File paths (can specify multiple times)
+- `--company-name`: Company name (required)
+- `--funding-stage`: Funding stage (required)
+- `--template`: Optional template file path
+- `--output`: Output file path (default: `memo_{company}_{timestamp}.md`)
+- `--no-file`: Disable file output, show in terminal only
+
+The CLI shows real-time progress and saves results to a markdown file by default.
 
 ## Testing
 
@@ -74,6 +111,49 @@ vc-memo-backend/
 └── render.yaml       # Deployment configuration
 ```
 
+## Ollama Integration (Optional)
+
+The system automatically detects and uses Ollama for non-critical extractions to reduce costs:
+
+- **Automatic Detection**: Checks Ollama status on app startup
+- **Cost Savings**: Non-critical extractions (market, team, company) use Ollama (free)
+- **Fallback**: Automatically uses OpenAI if Ollama is unavailable
+- **Storage**: ~2GB required for llama3.2:3b model
+- **Auto-Setup**: Can automatically install and configure Ollama for testing
+
+**Manual Setup (optional):**
+
+```bash
+# Install Ollama
+brew install ollama
+
+# Start Ollama service
+ollama serve
+
+# Download model (in another terminal)
+ollama pull llama3.2:3b
+```
+
+**Auto-Setup (for testing/development):**
+
+The backend can automatically set up Ollama on startup. Add to your `.env`:
+
+```bash
+# Auto-configure Ollama (start service, download model if needed)
+OLLAMA_AUTO_SETUP=true
+
+# Also install Ollama via Homebrew if not found (requires Homebrew)
+OLLAMA_AUTO_INSTALL=true
+```
+
+When `OLLAMA_AUTO_SETUP=true`, the backend will:
+
+1. Check if Ollama is installed
+2. Start the Ollama service if needed
+3. Download the model if missing
+
+The app will log Ollama status on startup. If not available, it will use OpenAI for all extractions.
+
 ## Architecture
 
 The system uses:
@@ -81,6 +161,7 @@ The system uses:
 - **FastAPI** for the REST API
 - **LangGraph** for orchestrating the memo generation pipeline
 - **OpenAI GPT-4o/GPT-4o-mini** for information extraction and memo writing
+- **Ollama** (optional) for non-critical extractions to reduce costs
 - **Async processing** with background tasks for long-running operations
 - **Caching** to reduce API costs and improve performance
 
