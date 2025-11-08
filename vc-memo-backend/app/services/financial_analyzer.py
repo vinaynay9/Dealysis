@@ -159,7 +159,11 @@ class FinancialAnalyzer:
             # Check if column contains date-like values
             elif df[col].dtype == "object":
                 try:
-                    pd.to_datetime(df[col].head(5), errors="raise")
+                    # Suppress the format inference warning - we're just testing if it's a date
+                    import warnings
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        pd.to_datetime(df[col].head(5), errors="raise", format="mixed")
                     time_cols.append(col)
                 except:
                     pass
