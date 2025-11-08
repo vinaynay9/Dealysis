@@ -238,6 +238,87 @@ def create_memo_pipeline():
         print("=" * 60)
         return state
 
+    async def enrich_context_node(state: MemoState) -> MemoState:
+        """Enrich extracted data with cross-chunk context"""
+        start_time = time.time()
+        print(f"\n[{state['job_id']}] 🔗 Context Enrichment Stage")
+        print("=" * 60)
+
+        try:
+            # Build context links: for each extractor, find related chunks from other extractors
+            all_chunks = state.get("parsed_chunks", [])
+            routed_chunks = state.get("routed_chunks", {})
+            extracted_data = state.get("extracted_data", {})
+            
+            if not all_chunks or not routed_chunks:
+                print("  ⚠ No chunks available for context enrichment")
+                state["context_links"] = {}
+                return state
+
+            # Create a mapping of chunk IDs to extractors
+            chunk_to_extractors = {}
+            for extractor_name, chunks in routed_chunks.items():
+                for chunk in chunks:
+                    chunk_id = id(chunk)
+                    if chunk_id not in chunk_to_extractors:
+                        chunk_to_extractors[chunk_id] = []
+                    chunk_to_extractors[chunk_id].append(extractor_name)
+
+            # For each extractor, find related chunks from other extractors
+            context_links = {}
+            for extractor_name in routed_chunks.keys():
+                related_chunks = []
+                
+                # Get chunks assigned to this extractor
+                primary_chunks = routed_chunks.get(extractor_name, [])
+                
+                # Find chunks that are also assigned to other extractors (cross-references)
+                for chunk in primary_chunks:
+                    chunk_id = id(chunk)
+                    assigned_extractors = chunk_to_extractors.get(chunk_id, [])
+                    
+                    # If chunk is assigned to multiple extractors, it's a cross-reference
+                    if len(assigned_extractors) > 1:
+                        for other_extractor in assigned_extractors:
+                            if other_extractor != extractor_name:
+                                # Add related chunks from other extractors
+                                other_chunks = routed_chunks.get(other_extractor, [])
+                                # Add chunks that share similar metadata (same source file)
+                                source_file = chunk.metadata.get("source_file", "")
+                                for other_chunk in other_chunks:
+                                    if other_chunk.metadata.get("source_file") == source_file:
+                                        if other_chunk not in related_chunks:
+                                            related_chunks.append(other_chunk)
+                
+                context_links[extractor_name] = related_chunks
+
+            state["context_links"] = context_links
+            
+            # Log enrichment statistics
+            total_links = sum(len(chunks) for chunks in context_links.values())
+            elapsed = time.time() - start_time
+            
+            print(f"\n✅ Context Enrichment Complete:")
+            print(f"   Total cross-references: {total_links}")
+            print(f"   Time:                 {elapsed:.2f}s")
+            
+            # Store statistics
+            if "statistics" not in state:
+                state["statistics"] = {}
+            state["statistics"]["context_enrichment_time"] = elapsed
+            state["statistics"]["context_links_count"] = total_links
+
+        except Exception as e:
+            error_msg = f"Context enrichment failed: {str(e)}"
+            state["error_messages"].append(error_msg)
+            print(f"  ✗ {error_msg}")
+            import traceback
+            traceback.print_exc()
+            state["context_links"] = {}
+
+        print("=" * 60)
+        return state
+
     async def generate_memo_node(state: MemoState) -> MemoState:
         """Generate final memo sections"""
         start_time = time.time()
@@ -254,6 +335,7 @@ def create_memo_pipeline():
             state["memo_sections"] = memo_result["sections"]
             state["confidence_scores"] = memo_result["confidence_scores"]
             state["flagged_items"] = memo_result["flagged_items"]
+            state["uncertainty_flags"] = memo_result.get("uncertainty_flags", [])
             state["final_memo"] = memo_result["final_memo"]
             state["processing_stage"] = "memo_generated"
 
@@ -388,6 +470,7 @@ def create_memo_pipeline():
     workflow.add_node("route_chunks", route_chunks_node)
     workflow.add_node("analyze_financial_files", analyze_financial_files_node)
     workflow.add_node("extract_information", extract_information_node)
+    workflow.add_node("enrich_context", enrich_context_node)
     workflow.add_node("generate_memo", generate_memo_node)
 
     # Define edges
@@ -395,7 +478,8 @@ def create_memo_pipeline():
     workflow.add_edge("parse_and_chunk_documents", "route_chunks")
     workflow.add_edge("route_chunks", "analyze_financial_files")
     workflow.add_edge("analyze_financial_files", "extract_information")
-    workflow.add_edge("extract_information", "generate_memo")
+    workflow.add_edge("extract_information", "enrich_context")
+    workflow.add_edge("enrich_context", "generate_memo")
     workflow.add_edge("generate_memo", END)
 
     # Compile and return
@@ -486,11 +570,13 @@ async def run_memo_pipeline(
         "template_structure": template,
         "parsed_chunks": [],
         "routed_chunks": {},
+        "context_links": {},
         "financial_analyses": [],
         "extracted_data": {},
         "memo_sections": {},
         "confidence_scores": {},
         "flagged_items": [],
+        "uncertainty_flags": [],
         "final_memo": "",
         "processing_stage": "initialized",
         "error_messages": [],
@@ -509,6 +595,7 @@ async def run_memo_pipeline(
             "memo_content": final_state["final_memo"],
             "confidence_scores": final_state["confidence_scores"],
             "flagged_items": final_state["flagged_items"],
+            "uncertainty_flags": final_state.get("uncertainty_flags", []),
             "error_messages": final_state["error_messages"],
             "processing_stage": final_state["processing_stage"],
         }

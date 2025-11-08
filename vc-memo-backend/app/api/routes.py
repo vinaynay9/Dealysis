@@ -156,6 +156,7 @@ async def process_memo_async(
                 "memo_content": result["memo_content"],
                 "confidence_scores": result["confidence_scores"],
                 "flagged_items": result["flagged_items"],
+                "uncertainty_flags": result.get("uncertainty_flags", []),
                 "company_name": company_name,
                 "funding_stage": funding_stage,
                 "generated_at": datetime.now().isoformat(),
