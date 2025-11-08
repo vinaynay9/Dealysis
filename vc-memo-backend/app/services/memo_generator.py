@@ -1,9 +1,17 @@
 from langchain_core.prompts import ChatPromptTemplate
 from app.core.config import get_generation_llm
 from app.utils.rate_limiter import RateLimiter
+from app.utils.token_counter import (
+    count_tokens,
+    estimate_cost,
+    format_cost,
+    format_tokens,
+)
 from typing import Dict, Any, List
 from datetime import datetime
 import asyncio
+import time
+import sys
 
 
 class MemoGenerator:
@@ -26,16 +34,31 @@ class MemoGenerator:
         memo_sections = {}
         confidence_scores = {}
         flagged_items = []
+        uncertainty_flags = []
+
+        # Build comprehensive context once for all sections (optimization)
+        comprehensive_context = self._build_comprehensive_context(extracted_data)
 
         # Generate each section sequentially with rate limiting and delays
         for i, section in enumerate(sections):
             section_key = section["key"]
             section_title = section["title"]
 
-            print(f"Generating section {i+1}/{len(sections)}: {section_title}")
+            print(f"\n[MEMO GENERATION] Section {i+1}/{len(sections)}: {section_title}", flush=True)
 
             # Map section to relevant extracted data
             relevant_data = self._get_relevant_data(section_key, extracted_data)
+
+            # Perform fact-checking before generation
+            fact_check_results = self._fact_check_data(relevant_data, section_key)
+            if fact_check_results["inconsistencies"]:
+                flagged_items.append(
+                    {
+                        "section": section_title,
+                        "reason": "Data inconsistencies detected",
+                        "inconsistencies": fact_check_results["inconsistencies"],
+                    }
+                )
 
             # Generate section content with rate limiting
             content, confidence = await self._generate_section(
@@ -44,10 +67,25 @@ class MemoGenerator:
                 relevant_data,
                 section.get("min_paragraphs", 1),
                 section.get("max_paragraphs", 3),
+                comprehensive_context,  # Pass comprehensive context
             )
 
             memo_sections[section_key] = content
             confidence_scores[section_key] = confidence
+
+            # Collect uncertainty flags from extracted data
+            for data_type, data in relevant_data.items():
+                if hasattr(data, "uncertainty_flags") and data.uncertainty_flags:
+                    uncertainty_flags.extend(
+                        [
+                            {
+                                "section": section_title,
+                                "data_type": data_type,
+                                "flag": flag,
+                            }
+                            for flag in data.uncertainty_flags
+                        ]
+                    )
 
             # Flag low confidence sections
             if confidence < 0.6:
@@ -72,6 +110,7 @@ class MemoGenerator:
             "sections": memo_sections,
             "confidence_scores": confidence_scores,
             "flagged_items": flagged_items,
+            "uncertainty_flags": uncertainty_flags,
             "final_memo": final_memo,
         }
 
@@ -110,6 +149,69 @@ class MemoGenerator:
 
         return relevant_data
 
+    def _build_comprehensive_context(self, extracted_data: Dict[str, Any]) -> str:
+        """Build a single comprehensive context from all extracted data"""
+        context_parts = []
+        
+        for data_type, data in extracted_data.items():
+            if hasattr(data, "dict"):
+                data_dict = data.dict()
+            else:
+                data_dict = data
+            
+            # Skip metadata fields
+            data_dict = {k: v for k, v in data_dict.items() if not k.startswith("_") and k not in ["confidence", "uncertainty_flags", "source_citations"]}
+            
+            if data_dict:
+                context_parts.append(f"\n{data_type.upper()} DATA:")
+                for key, value in data_dict.items():
+                    if value is not None and value != []:
+                        context_parts.append(f"  {key}: {value}")
+        
+        return "\n".join(context_parts) if context_parts else "No data available"
+    
+    def _fact_check_data(self, data: Dict[str, Any], section_key: str) -> Dict[str, Any]:
+        """Cross-reference extracted data for consistency and fact-checking"""
+        inconsistencies = []
+        
+        # Check for conflicting values across data types
+        financial_data = data.get("financial", {})
+        company_data = data.get("company", {})
+        progress_data = data.get("progress", {})
+        
+        # Convert to dicts if Pydantic models
+        if hasattr(financial_data, "dict"):
+            financial_data = financial_data.dict()
+        if hasattr(company_data, "dict"):
+            company_data = company_data.dict()
+        if hasattr(progress_data, "dict"):
+            progress_data = progress_data.dict()
+        
+        # Check funding stage consistency
+        financial_stage = financial_data.get("funding_stage") if isinstance(financial_data, dict) else None
+        company_stage = company_data.get("funding_stage") if isinstance(company_data, dict) else None
+        
+        if financial_stage and company_stage and financial_stage != company_stage:
+            inconsistencies.append(
+                f"Funding stage mismatch: financial data says '{financial_stage}', company data says '{company_stage}'"
+            )
+        
+        # Check investment ask consistency
+        investment_ask = financial_data.get("investment_ask") if isinstance(financial_data, dict) else None
+        current_round_size = financial_data.get("current_round_size") if isinstance(financial_data, dict) else None
+        
+        if investment_ask and current_round_size and str(investment_ask).lower() != str(current_round_size).lower():
+            inconsistencies.append(
+                f"Investment ask mismatch: investment_ask='{investment_ask}', current_round_size='{current_round_size}'"
+            )
+        
+        # Check for missing critical data
+        if section_key == "exec_summary":
+            if not investment_ask and not current_round_size:
+                inconsistencies.append("Missing investment ask/round size - critical for executive summary")
+        
+        return {"inconsistencies": inconsistencies, "checked": True}
+
     async def _generate_section(
         self,
         title: str,
@@ -117,6 +219,7 @@ class MemoGenerator:
         data: Dict[str, Any],
         min_paragraphs: int,
         max_paragraphs: int,
+        comprehensive_context: str = "",
     ) -> tuple[str, float]:
         """Generate a single memo section"""
 
@@ -129,6 +232,9 @@ Required length: {min_paragraphs} to {max_paragraphs} paragraphs
 
 Available extracted data:
 {data}
+
+Comprehensive context (for cross-referencing):
+{comprehensive_context}
 
 CRITICAL INSTRUCTIONS - Think like a VC analyst:
 
@@ -156,6 +262,8 @@ CRITICAL INSTRUCTIONS - Think like a VC analyst:
    - If critical data is missing (investment ask, key metrics, etc.), explicitly state: "This information was not provided in the materials"
    - Flag important omissions that would affect investment decision
    - Don't make up or infer data that isn't present
+   - If you are uncertain about any fact, explicitly state: "This information could not be verified from the provided materials"
+   - NEVER invent numbers, dates, or facts that are not explicitly stated in the data
 
 5. PROFESSIONAL TONE:
    - Write in a concise, analytical style typical of VC memos
@@ -174,22 +282,57 @@ Write the section content now, ensuring you include ALL available details and ex
 """
         )
 
+        # Format the prompt to estimate tokens
+        formatted_data = self._format_data_for_prompt(data)
+        formatted_messages = prompt.format_messages(
+            title=title,
+            description=description,
+            min_paragraphs=min_paragraphs,
+            max_paragraphs=max_paragraphs,
+            data=formatted_data,
+            comprehensive_context=comprehensive_context,
+        )
+        
+        # Estimate input tokens (prompt + comprehensive context)
+        # Convert messages to text for token counting
+        prompt_parts = []
+        for msg in formatted_messages:
+            if hasattr(msg, 'content'):
+                prompt_parts.append(msg.content)
+            elif hasattr(msg, 'get'):
+                prompt_parts.append(msg.get('content', str(msg)))
+            else:
+                prompt_parts.append(str(msg))
+        prompt_text = "\n".join(prompt_parts)
+        input_tokens = count_tokens(prompt_text, "gpt-4o")
+        
+        print(f"  → Using: GPT-4O (memo generation)", flush=True)
+        print(f"  → Input: {format_tokens(input_tokens)} tokens (includes comprehensive context)", flush=True)
+        
         # Use rate limiter to handle API calls with retry logic
+        print(f"  → Processing with GPT-4O...", flush=True)
+        start_time = time.time()
         response = await self.rate_limiter.execute(
             self.llm.ainvoke,
-            prompt.format_messages(
-                title=title,
-                description=description,
-                min_paragraphs=min_paragraphs,
-                max_paragraphs=max_paragraphs,
-                data=self._format_data_for_prompt(data),
-            ),
+            formatted_messages,
         )
+        elapsed = time.time() - start_time
 
         content = response.content
+        
+        # Count output tokens
+        output_tokens = count_tokens(content, "gpt-4o")
+        cost = estimate_cost(input_tokens, output_tokens, "gpt-4o")
+        
+        print(f"  → Output: {format_tokens(output_tokens)} tokens", flush=True)
+        print(f"  → Time: {elapsed:.2f}s", flush=True)
+        print(f"  → Cost: {format_cost(cost)}", flush=True)
 
         # Calculate confidence based on data completeness
         confidence = self._calculate_section_confidence(data)
+        
+        print(f"  → Confidence: {confidence:.2f}", flush=True)
+        print(f"  → ✅ Complete", flush=True)
 
         return content, confidence
 

@@ -18,11 +18,13 @@ class MemoState(TypedDict):
     template_structure: Dict[str, Any]
     parsed_chunks: List[str]
     routed_chunks: Dict[str, List[Any]]  # Maps extractor names to their assigned chunks
+    context_links: Dict[str, List[str]]  # Maps extractor names to related chunk IDs for context enrichment
     financial_analyses: List[Dict[str, Any]]
     extracted_data: Dict[str, Any]
     memo_sections: Dict[str, str]
     confidence_scores: Dict[str, float]
     flagged_items: List[Dict[str, str]]
+    uncertainty_flags: List[Dict[str, Any]]  # List of uncertainty flags with details
     final_memo: str
     processing_stage: str
     error_messages: List[str]
@@ -32,6 +34,8 @@ class ExtractedData(BaseModel):
     """Base class for all extracted data types"""
 
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    uncertainty_flags: List[str] = Field(default_factory=list, description="List of fields with uncertain or missing data")
+    source_citations: Dict[str, List[str]] = Field(default_factory=dict, description="Map of field names to source document names")
 
     class Config:
         extra = "allow"
