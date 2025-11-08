@@ -175,7 +175,16 @@ async def test_memo_generation():
                             for section, score in memo_result[
                                 "confidence_scores"
                             ].items():
-                                print(f"{section}: {score:.2f}")
+                                # Format section name
+                                section_name = section.replace("_", " ").title()
+                                # Color indicator
+                                if score >= 0.8:
+                                    indicator = "🟢"
+                                elif score >= 0.6:
+                                    indicator = "🟡"
+                                else:
+                                    indicator = "🔴"
+                                print(f"  {indicator} {section_name:25} {score:.2f}")
 
                         if "flagged_items" in memo_result:
                             print("\n" + "=" * 70)
@@ -189,6 +198,28 @@ async def test_memo_generation():
                                     print(
                                         f"  Missing: {', '.join(item['missing_data'])}"
                                     )
+                                if item.get("inconsistencies"):
+                                    print(
+                                        f"  Inconsistencies: {', '.join(item['inconsistencies'])}"
+                                    )
+
+                        # Check for new uncertainty_flags field
+                        if "uncertainty_flags" in memo_result:
+                            print("\n" + "=" * 70)
+                            print(
+                                f"UNCERTAINTY FLAGS ({len(memo_result['uncertainty_flags'])})"
+                            )
+                            print("=" * 70)
+                            for flag in memo_result["uncertainty_flags"]:
+                                section = flag.get("section", "unknown")
+                                data_type = flag.get("data_type", "unknown")
+                                flag_text = flag.get("flag", "unknown")
+                                print(f"- {section} ({data_type}): {flag_text}")
+                        else:
+                            print("\n" + "=" * 70)
+                            print("UNCERTAINTY FLAGS: Not found in response")
+                            print("=" * 70)
+                            print("⚠️  WARNING: uncertainty_flags field missing - new feature may not be working")
             except Exception as e:
                 print(f"Exception while retrieving memo: {e}")
 
