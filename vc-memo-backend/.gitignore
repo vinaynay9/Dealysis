@@ -16,7 +16,7 @@ ENV/
 .env.local
 
 # Cache and runtime artifacts
-cache/
+runtime/
 exported_memos/
 *.db
 
