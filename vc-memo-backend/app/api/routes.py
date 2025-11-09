@@ -3,9 +3,9 @@ from fastapi.responses import JSONResponse
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime
-from app.services.pipeline import run_memo_pipeline
+from app.services.pipeline.pipeline import run_memo_pipeline
 from app.core.models import JobStatus
-from app.services.template_parser import TemplateParser
+from app.services.generation.template_parser import TemplateParser
 
 router = APIRouter()
 

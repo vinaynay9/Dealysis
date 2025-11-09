@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
-from app.utils.ollama_setup import get_ollama_status, setup_ollama_automatically
+from app.utils.llm.ollama_setup import get_ollama_status, setup_ollama_automatically
 import logging
 import os
 

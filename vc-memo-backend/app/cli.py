@@ -8,10 +8,10 @@ import os
 from pathlib import Path
 from datetime import datetime
 from typing import List, Optional
-from app.services.pipeline import run_memo_pipeline
+from app.services.pipeline.pipeline import run_memo_pipeline
 from app.core.models import DEFAULT_TEMPLATE
-from app.services.template_parser import TemplateParser
-from app.utils.ollama_setup import get_ollama_status, setup_ollama_automatically
+from app.services.generation.template_parser import TemplateParser
+from app.utils.llm.ollama_setup import get_ollama_status, setup_ollama_automatically
 
 
 def format_confidence_table(confidence_scores: dict) -> str:
@@ -329,10 +329,14 @@ def generate_memo(
             if output:
                 output_path = Path(output)
             else:
+                # Default to runtime/outputs/ directory
+                outputs_dir = Path("runtime/outputs")
+                outputs_dir.mkdir(parents=True, exist_ok=True)
+                
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 safe_company = "".join(c for c in company_name if c.isalnum() or c in (" ", "-", "_")).strip()
                 safe_company = safe_company.replace(" ", "_")
-                output_path = Path(f"memo_{safe_company}_{timestamp}.md")
+                output_path = outputs_dir / f"memo_{safe_company}_{timestamp}.md"
             
             save_memo_to_file(
                 memo_content,

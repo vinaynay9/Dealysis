@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 
@@ -37,3 +38,8 @@ def get_ollama_config() -> dict:
         "model": os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
         "enabled": os.getenv("OLLAMA_ENABLED", "true").lower() == "true",
     }
+
+
+def get_claude_api_key() -> Optional[str]:
+    """Get Claude API key from environment variables"""
+    return os.getenv("CLAUDE_API_KEY")
