@@ -11,7 +11,7 @@ from pathlib import Path
 class SummaryCache:
     """Caching layer for LLM summaries using SQLite"""
     
-    def __init__(self, cache_dir: str = "cache", db_name: str = "summary_cache.db"):
+    def __init__(self, cache_dir: str = "runtime/cache", db_name: str = "summary_cache.db"):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
         self.db_path = self.cache_dir / db_name
