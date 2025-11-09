@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any, List
 import json
 import time
 import sys
-from app.utils.token_counter import estimate_ollama_tokens, format_tokens
+from app.utils.llm.token_counter import estimate_ollama_tokens, format_tokens
 
 
 class LocalLLMService:
