@@ -33,6 +33,16 @@
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
 
+## Performance Analysis
+
+Track and analyze extraction model performance over time:
+
+- **Interactive Notebook**: `tests/performance/analysis.ipynb` - Comprehensive analysis and visualization
+- **User Guide**: [Performance Analysis Guide](docs/PERFORMANCE_ANALYSIS_GUIDE.md) - Complete documentation
+- **Automated Reports**: `python scripts/generate_performance_report.py` - Generate reports programmatically
+
+See [Performance Tracking Documentation](docs/PERFORMANCE_TRACKING.md) for more details.
+
 ## CLI Tool
 
 Generate memos directly from the terminal:
