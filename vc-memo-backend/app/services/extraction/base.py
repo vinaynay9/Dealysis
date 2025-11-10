@@ -325,9 +325,16 @@ class OptimizedExtractor:
             return {}
 
     async def extract(
-        self, documents: List[Document], extract_type: str
+        self, documents: List[Document], extract_type: str, 
+        settings: Dict[str, Any] = None
     ) -> ExtractedData:
-        """Extract specific type of data from document chunks"""
+        """Extract specific type of data from document chunks
+        
+        Args:
+            documents: List of document chunks to extract from
+            extract_type: Type of data to extract (financial, progress, etc.)
+            settings: Optional extraction settings (confidence method, critical requirements)
+        """
 
         if extract_type not in EXTRACTION_PROMPTS:
             raise ValueError(f"Unknown extraction type: {extract_type}")
@@ -432,9 +439,16 @@ class OptimizedExtractor:
         data_class = self.data_classes[extract_type]
         consolidated = self._consolidate_results(valid_results, data_class, documents)
 
+        # Get confidence calculation method and critical requirements from settings
+        method = "hybrid"
+        critical_requirements = None
+        if settings:
+            method = settings.get("confidenceCalculationMethod", "hybrid")
+            critical_requirements = settings.get("critical", None)
+        
         # Calculate confidence with cross-chunk consistency
         confidence, uncertainty_flags = self._calculate_confidence_with_consistency(
-            valid_results, len(documents), extract_type
+            valid_results, len(documents), extract_type, method, critical_requirements
         )
         consolidated.confidence = confidence
         consolidated.uncertainty_flags = uncertainty_flags
@@ -527,9 +541,18 @@ class OptimizedExtractor:
         return data_class(**consolidated)
 
     def _calculate_confidence_with_consistency(
-        self, results: List[Dict], total_chunks: int, extract_type: str
+        self, results: List[Dict], total_chunks: int, extract_type: str, 
+        method: str = "hybrid", critical_requirements: Dict[str, Any] = None
     ) -> tuple[float, List[str]]:
-        """Calculate extraction confidence with cross-chunk consistency checking"""
+        """Calculate extraction confidence with cross-chunk consistency checking
+        
+        Args:
+            results: List of extraction results
+            total_chunks: Total number of chunks processed
+            extract_type: Type of extraction (financial, progress, etc.)
+            method: Confidence calculation method (data_completeness, consistency_based, hybrid)
+            critical_requirements: Optional dict with required fields per category
+        """
         if total_chunks == 0:
             return 0.0, []
 
@@ -573,23 +596,48 @@ class OptimizedExtractor:
         consistency_score = 1.0 - (len(uncertainty_flags) * 0.05)  # Reduced from 0.1
         consistency_score = max(0.7, consistency_score)  # Don't penalize too heavily (raised from 0.5)
         
-        # Base confidence calculation - weight data richness more heavily
-        base_confidence = success_rate * 0.4 + avg_richness * 0.5 + consistency_score * 0.1
+        # Base confidence calculation - adjust weights based on method
+        if method == "data_completeness":
+            base_confidence = success_rate * 0.3 + avg_richness * 0.7  # Emphasize data richness
+        elif method == "consistency_based":
+            base_confidence = success_rate * 0.4 + consistency_score * 0.6  # Emphasize consistency
+        else:  # hybrid (default)
+            base_confidence = success_rate * 0.4 + avg_richness * 0.5 + consistency_score * 0.1
         
-        # Additional penalty for missing critical fields (less harsh)
-        critical_fields = {
-            "financial": ["investment_ask", "current_round_size", "funding_stage"],
-            "progress": ["arr", "mrr", "growth_rate_mom"],
-            "company": ["company_name", "funding_stage"],
-            "market": ["tam", "sam"],
-            "team": ["founders"]
-        }
+        # Check for missing critical fields (use provided requirements or defaults)
+        if critical_requirements:
+            # Use provided critical requirements
+            category_key_map = {
+                "financial": "requiredFinancialFields",
+                "progress": "requiredProgressFields",
+                "market": "requiredMarketFields",
+                "company": "requiredCompanyFields",
+                "team": "requiredTeamFields"
+            }
+            category_key = category_key_map.get(extract_type)
+            if category_key and category_key in critical_requirements:
+                required_fields = critical_requirements[category_key]
+                if isinstance(required_fields, list):
+                    critical_fields_list = required_fields
+                else:
+                    critical_fields_list = list(required_fields) if hasattr(required_fields, '__iter__') else []
+            else:
+                critical_fields_list = []
+        else:
+            # Use default critical fields
+            critical_fields = {
+                "financial": ["investment_ask", "current_round_size", "funding_stage"],
+                "progress": ["arr", "mrr", "growth_rate_mom"],
+                "company": ["company_name", "funding_stage"],
+                "market": ["tam", "sam"],
+                "team": ["founders"]
+            }
+            critical_fields_list = critical_fields.get(extract_type, [])
         
         critical_missing = []
-        if extract_type in critical_fields:
-            for critical_field in critical_fields[extract_type]:
-                if critical_field not in field_values or not field_values[critical_field]:
-                    critical_missing.append(critical_field)
+        for critical_field in critical_fields_list:
+            if critical_field not in field_values or not field_values[critical_field]:
+                critical_missing.append(critical_field)
         
         if critical_missing:
             uncertainty_flags.extend([f"Missing critical field: {field}" for field in critical_missing])
@@ -634,13 +682,14 @@ class ExtractionCoordinator:
         self.extract_types = ["progress", "financial", "market", "company", "team"]
 
     async def extract_all(
-        self, routed_chunks: Dict[str, List[Document]]
+        self, routed_chunks: Dict[str, List[Document]], settings: Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """
         Run all extractors in parallel on their assigned chunks.
 
         Args:
             routed_chunks: Dict mapping extractor names to their assigned document chunks
+            settings: Optional extraction settings (confidence method, critical requirements)
 
         Returns:
             Dict of extracted data by type
@@ -652,7 +701,7 @@ class ExtractionCoordinator:
         # Create extraction tasks with routed chunks
         tasks = {
             extract_type: self.extractor.extract(
-                routed_chunks.get(extract_type, []), extract_type
+                routed_chunks.get(extract_type, []), extract_type, settings
             )
             for extract_type in self.extract_types
         }

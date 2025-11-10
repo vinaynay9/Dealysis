@@ -328,8 +328,11 @@ def create_memo_pipeline():
             # Use template structure
             template = state.get("template_structure", DEFAULT_TEMPLATE)
 
+            # Get settings from state if available
+            settings = state.get("generation_settings", None)
+            
             memo_result = await memo_generator.generate_complete_memo(
-                state["extracted_data"], template
+                state["extracted_data"], template, settings
             )
 
             state["memo_sections"] = memo_result["sections"]
@@ -553,12 +556,23 @@ def _merge_financial_analyses(extracted_data: Dict[str, Any], financial_analyses
 
 
 async def run_memo_pipeline(
-    job_id: str, documents: list, template_structure: dict = None
+    job_id: str, documents: list, template_structure: dict = None, 
+    generation_settings: dict = None, seed: int = None
 ) -> dict:
-    """Execute the optimized memo generation pipeline"""
+    """Execute the optimized memo generation pipeline
+    
+    Args:
+        job_id: Unique job identifier
+        documents: List of document dictionaries
+        template_structure: Optional template structure
+        generation_settings: Optional generation settings dict
+        seed: Optional seed for deterministic runs
+    """
 
     print(f"\n🚀 Starting pipeline for job {job_id}")
     print(f"📄 Processing {len(documents)} documents")
+    if seed is not None:
+        print(f"🌱 Using seed: {seed} for deterministic run")
 
     # Use provided template or default
     template = template_structure if template_structure else DEFAULT_TEMPLATE
@@ -582,6 +596,12 @@ async def run_memo_pipeline(
         "error_messages": [],
         "statistics": {},  # Track performance metrics
     }
+    
+    # Add settings and seed to state if provided
+    if generation_settings:
+        initial_state["generation_settings"] = generation_settings
+    if seed is not None:
+        initial_state["seed"] = seed
 
     # Create and run pipeline
     pipeline = create_memo_pipeline()

@@ -26,15 +26,33 @@ class MemoGenerator:
         )
 
     async def generate_complete_memo(
-        self, extracted_data: Dict[str, Any], template: Dict[str, Any]
+        self, 
+        extracted_data: Dict[str, Any], 
+        template: Dict[str, Any],
+        settings: Dict[str, Any] = None
     ) -> Dict[str, Any]:
-        """Generate all memo sections based on template"""
+        """Generate all memo sections based on template
+        
+        Args:
+            extracted_data: Extracted data from documents
+            template: Template structure with sections
+            settings: Optional generation settings (formatting, quality control, etc.)
+        """
 
         sections = template["sections"]
         memo_sections = {}
         confidence_scores = {}
         flagged_items = []
         uncertainty_flags = []
+        
+        # Extract settings with defaults
+        formatting = settings.get("formatting", {}) if settings else {}
+        quality_control = settings.get("qc", {}) if settings else {}
+        critical_requirements = settings.get("critical", {}) if settings else {}
+        missing_policy = settings.get("missing", {}) if settings else {}
+        
+        min_confidence = settings.get("minimumConfidenceThreshold", 0.7) if settings else 0.7
+        flag_low_confidence = settings.get("flagLowConfidenceSections", True) if settings else True
 
         # Build comprehensive context once for all sections (optimization)
         comprehensive_context = self._build_comprehensive_context(extracted_data)
@@ -68,6 +86,7 @@ class MemoGenerator:
                 section.get("min_paragraphs", 1),
                 section.get("max_paragraphs", 3),
                 comprehensive_context,  # Pass comprehensive context
+                settings,  # Pass settings for confidence calculation
             )
 
             memo_sections[section_key] = content
@@ -87,8 +106,9 @@ class MemoGenerator:
                         ]
                     )
 
-            # Flag low confidence sections
-            if confidence < 0.6:
+            # Flag low confidence sections (use threshold from settings if available)
+            confidence_threshold = min_confidence if settings else 0.6
+            if confidence < confidence_threshold:
                 flagged_items.append(
                     {
                         "section": section_title,
@@ -220,6 +240,7 @@ class MemoGenerator:
         min_paragraphs: int,
         max_paragraphs: int,
         comprehensive_context: str = "",
+        settings: Dict[str, Any] = None,
     ) -> tuple[str, float]:
         """Generate a single memo section"""
 
@@ -329,7 +350,7 @@ Write the section content now, ensuring you include ALL available details and ex
         print(f"  → Cost: {format_cost(cost)}", flush=True)
 
         # Calculate confidence based on data completeness
-        confidence = self._calculate_section_confidence(data)
+        confidence = self._calculate_section_confidence(data, settings)
         
         print(f"  → Confidence: {confidence:.2f}", flush=True)
         print(f"  → ✅ Complete", flush=True)
@@ -398,11 +419,16 @@ Write the section content now, ensuring you include ALL available details and ex
 
         return "\n".join(formatted)
 
-    def _calculate_section_confidence(self, data: Dict[str, Any]) -> float:
-        """Calculate confidence for a section based on available data"""
+    def _calculate_section_confidence(self, data: Dict[str, Any], settings: Dict[str, Any] = None) -> float:
+        """Calculate confidence for a section based on available data and settings"""
         if not data:
             return 0.3
-
+        
+        # Get confidence calculation method from settings
+        method = "hybrid"
+        if settings:
+            method = settings.get("confidenceCalculationMethod", "hybrid")
+        
         total_confidence = 0
         count = 0
 
@@ -413,8 +439,21 @@ Write the section content now, ensuring you include ALL available details and ex
 
         if count == 0:
             return 0.5
-
-        return min(total_confidence / count, 0.95)
+        
+        base_confidence = min(total_confidence / count, 0.95)
+        
+        # Apply method-specific adjustments
+        if method == "data_completeness":
+            # Focus on data richness
+            non_null_fields = sum(1 for v in data.values() if isinstance(v, dict) and any(v.values()))
+            field_ratio = non_null_fields / max(len(data), 1)
+            base_confidence = (base_confidence * 0.6) + (field_ratio * 0.4)
+        elif method == "consistency_based":
+            # Focus on consistency (already factored into extraction confidence)
+            pass  # Use base confidence as-is
+        # else: hybrid (default) - use base confidence
+        
+        return min(base_confidence, 0.95)
 
     def _identify_missing_data(
         self, section_key: str, data: Dict[str, Any]

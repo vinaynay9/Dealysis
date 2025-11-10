@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Background
 from fastapi.responses import JSONResponse
 from typing import List, Optional, Dict, Any
 import uuid
+import json
 from datetime import datetime
 from app.services.pipeline.pipeline import run_memo_pipeline
 from app.core.models import JobStatus
@@ -306,3 +307,227 @@ async def root():
             },
         },
     }
+
+# MARK: - Admin Experimentation Endpoints
+
+from app.services.experiments.corpus_manager import CorpusManager
+from app.services.experiments.experiment_service import ExperimentService
+from app.services.experiments.run_service import RunService
+from app.schemas.admin import CompanyCorpus, Experiment, RunResult, GridSpec, Preset
+from uuid import UUID
+
+corpus_manager = CorpusManager()
+experiment_service = ExperimentService()
+run_service = RunService()
+
+# Corpora endpoints
+@router.post("/corpora")
+async def create_corpus(
+    name: str = Form(...),
+    artifacts: List[UploadFile] = File(...)
+):
+    """Create a new corpus with artifacts"""
+    files_data = []
+    for file in artifacts:
+        content = await file.read()
+        files_data.append({
+            "filename": file.filename,
+            "type": file.filename.split(".")[-1] if "." in file.filename else "unknown",
+            "content": content
+        })
+    
+    corpus_id = corpus_manager.create_corpus(name, files_data)
+    
+    # Get the created corpus to return full details
+    corpus = corpus_manager.storage.get_corpus(corpus_id)
+    if corpus:
+        # Convert to response format (remove file_path from artifacts)
+        response_artifacts = []
+        for artifact in corpus.get("artifacts", []):
+            response_artifacts.append({
+                "id": artifact.get("id"),
+                "name": artifact.get("name"),
+                "type": artifact.get("type"),
+                "sha256": artifact.get("sha256"),
+                "bytes": artifact.get("bytes")
+            })
+        
+        return {
+            "id": corpus_id,
+            "name": name,
+            "artifacts": response_artifacts,
+            "createdAt": corpus.get("created_at", datetime.utcnow().isoformat())
+        }
+    
+    # Fallback response
+    return {
+        "id": corpus_id,
+        "name": name,
+        "artifacts": [{"name": f["filename"], "type": f["type"]} for f in files_data],
+        "createdAt": datetime.utcnow().isoformat()
+    }
+
+@router.get("/corpora/{corpus_id}")
+async def get_corpus(corpus_id: str):
+    """Get corpus by ID"""
+    corpus = corpus_manager.storage.get_corpus(corpus_id)
+    if not corpus:
+        raise HTTPException(status_code=404, detail="Corpus not found")
+    return corpus
+
+@router.get("/corpora")
+async def list_corpora():
+    """List all corpora"""
+    return corpus_manager.storage.list_corpora()
+
+# Experiments endpoints
+@router.post("/experiments")
+async def create_experiment(experiment: Experiment):
+    """Create a new experiment"""
+    experiment_id = experiment_service.create_experiment(experiment.dict(by_alias=True))
+    return {"id": experiment_id, "status": "created"}
+
+@router.get("/experiments/{experiment_id}")
+async def get_experiment(experiment_id: str):
+    """Get experiment by ID"""
+    experiment = experiment_service.get_experiment(experiment_id)
+    if not experiment:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    return experiment
+
+@router.get("/experiments")
+async def list_experiments(corpus_id: Optional[str] = None):
+    """List experiments, optionally filtered by corpus"""
+    return experiment_service.list_experiments(corpus_id)
+
+# Runs endpoints
+@router.post("/runs")
+async def run_single(
+    experiment_id: str = Form(...),
+    model: Optional[str] = Form(None),
+    decode: Optional[str] = Form(None)
+):
+    """Execute a single run"""
+    decode_params = json.loads(decode) if decode else None
+    result = await run_service.run_single(experiment_id, model, decode_params)
+    return result
+
+@router.post("/runs/batch")
+async def run_batch(
+    experiment_id: str = Form(...),
+    grid: str = Form(...)
+):
+    """Execute batch runs from grid spec"""
+    grid_spec = json.loads(grid)
+    results = await run_service.run_batch(experiment_id, grid_spec)
+    return results
+
+@router.get("/runs")
+async def list_runs(experiment_id: Optional[str] = None):
+    """List runs, optionally filtered by experiment"""
+    return run_service.storage.list_runs(experiment_id)
+
+@router.get("/runs/{run_id}")
+async def get_run(run_id: str):
+    """Get run by ID"""
+    run = run_service.storage.get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return run
+
+@router.post("/runs/{run_id}/cancel")
+async def cancel_run(run_id: str):
+    """Cancel a queued or running run"""
+    success = await run_service.cancel_run(run_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Run not found or cannot be cancelled")
+    return {"status": "cancelled"}
+
+@router.patch("/runs/{run_id}/rating")
+async def update_run_rating(
+    run_id: str,
+    human_rating: Optional[int] = Form(None),
+    human_notes: Optional[str] = Form(None)
+):
+    """Update human rating and notes for a run"""
+    run = run_service.storage.get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+    
+    updates = {}
+    if human_rating is not None:
+        updates["human_rating"] = human_rating
+    if human_notes is not None:
+        updates["human_notes"] = human_notes
+    
+    run_service.storage.update_run(run_id, updates)
+    updated_run = run_service.storage.get_run(run_id)
+    
+    # Convert to RunResult schema
+    from app.schemas.admin import RunResult
+    return RunResult(**updated_run).dict(by_alias=True)
+
+# Presets endpoints
+@router.post("/presets")
+async def save_preset(preset: Preset):
+    """Save a preset"""
+    preset_dict = preset.dict(by_alias=True)
+    preset_id = run_service.storage.save_preset(preset_dict)
+    return {"id": preset_id, "status": "saved"}
+
+@router.get("/presets")
+async def list_presets():
+    """List all presets"""
+    return run_service.storage.list_presets()
+
+# Exports endpoint
+@router.get("/runs/{run_id}/export")
+async def export_run(run_id: str):
+    """Export run as ZIP with config, memo, and scores"""
+    import zipfile
+    import io
+    from fastapi.responses import StreamingResponse
+    
+    run = run_service.storage.get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+    
+    experiment = experiment_service.get_experiment(run["experiment_id"])
+    if not experiment:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    
+    # Create ZIP in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        # config.json
+        config = {
+            "promptBundle": experiment.get("prompt_bundle", {}),
+            "generation": experiment.get("generation", {}),
+            "critical": experiment.get("critical", {}),
+            "formatting": experiment.get("formatting", {}),
+            "qc": experiment.get("qc", {}),
+            "missing": experiment.get("missing", {}),
+            "decode": experiment.get("decode", {}),
+            "model": run.get("model"),
+            "configHash": run.get("config_hash"),
+            "seed": run.get("seed")
+        }
+        zip_file.writestr("config.json", json.dumps(config, indent=2))
+        
+        # memo.md
+        zip_file.writestr("memo.md", run.get("memo_text", ""))
+        
+        # scores.json
+        scores = {
+            "sectionScores": run.get("section_scores", {}),
+            "compositeScore": run.get("composite_score", 0.0),
+            "flags": run.get("flags", [])
+        }
+        zip_file.writestr("scores.json", json.dumps(scores, indent=2))
+    
+    zip_buffer.seek(0)
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename=run_{run_id}.zip"}
+    )
